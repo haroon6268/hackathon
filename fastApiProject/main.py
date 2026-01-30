@@ -1,7 +1,7 @@
 import base64
 import os
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile, File
 from recipe import Recipe
 
 
@@ -15,10 +15,12 @@ open_ai_key = os.getenv("OPENAI_API_KEY")
 client = AsyncOpenAI(api_key=open_ai_key)
 
 
-@app.get("/")
-async def root():
+@app.post("/")
+async def root(file: UploadFile = File(...)):
+    contents = await file.read()
     with open("test.jpg", "rb") as image_file:
-        base64_image = base64.b64encode(image_file.read()).decode("utf-8")
+        base64_image = base64.b64encode(contents).decode("utf-8")
+        # base64_image = base64.b64encode(image_file.read()).decode("utf-8")
         response = await client.responses.create(
             model="gpt-4.1",
             input=[
