@@ -8,6 +8,7 @@ export type Recipe = {
   servings: number;
   ingredients: string[];
   instructions: string[];
+  image?: any;
 };
 
 type AppContextType = {

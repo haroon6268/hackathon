@@ -10,6 +10,7 @@ import {
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAppContext } from "@/context/AppContext";
+import { RecipeCard } from "@/components/RecipeCard";
 
 const PRIMARY = "#E9724C";
 
@@ -33,21 +34,11 @@ export default function Results() {
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {recipes.map((recipe, index) => (
-          <TouchableOpacity
+          <RecipeCard
             key={recipe.id}
-            style={styles.card}
+            recipe={recipe}
             onPress={() => router.push({ pathname: "/recipe", params: { index } })}
-          >
-            <View style={styles.cardContent}>
-              <Text style={styles.recipeName}>{recipe.name}</Text>
-              <Text style={styles.recipeDescription}>{recipe.description}</Text>
-              <View style={styles.timeContainer}>
-                <Ionicons name="time-outline" size={16} color="#666" />
-                <Text style={styles.timeText}>{recipe.time}</Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={24} color="#ccc" />
-          </TouchableOpacity>
+          />
         ))}
       </ScrollView>
     </SafeAreaView>
@@ -93,37 +84,5 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 16,
     gap: 12,
-  },
-  card: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#eee",
-  },
-  cardContent: {
-    flex: 1,
-  },
-  recipeName: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 4,
-  },
-  recipeDescription: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 8,
-  },
-  timeContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  timeText: {
-    fontSize: 14,
-    color: "#666",
   },
 });
