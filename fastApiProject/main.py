@@ -18,37 +18,37 @@ client = AsyncOpenAI(api_key=open_ai_key)
 @app.post("/")
 async def root(file: UploadFile = File(...)):
     contents = await file.read()
-    with open("test.jpg", "rb") as image_file:
-        base64_image = base64.b64encode(contents).decode("utf-8")
-        # base64_image = base64.b64encode(image_file.read()).decode("utf-8")
-        response = await client.responses.create(
-            model="gpt-4.1",
-            input=[
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "input_text",
-                            "text": (
-                                "List the ingredients visible in this image, then create a recipe "
-                                "using ONLY those ingredients.\n\n"
-                                "Return ONLY valid JSON in this format:\n"
-                                "{\n"
-                                '  "title": "...",\n'
-                                '  "ingredients": ["..."],\n'
-                                '  "macros": {"protein": 0, "fat": 0, "carbs": 0},\n'
-                                '  "steps": ["..."]\n'
-                                "}"
-                            ),
-                        },
-                        {
-                            "type": "input_image",
-                            "image_url": f"data:image/jpeg;base64,{base64_image}",
-                        },
-                    ],
-                }
-            ],
-        )
+    base64_image = base64.b64encode(contents).decode("utf-8")
+    # base64_image = base64.b64encode(image_file.read()).decode("utf-8")
+    response = await client.responses.create(
+        model="gpt-4.1",
+        input=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "input_text",
+                        "text": (
+                            "List the ingredients visible in this image, then create a recipe "
+                            "using ONLY those ingredients.\n\n"
+                            "Return ONLY valid JSON in this format:\n"
+                            "{\n"
+                            '  "title": "...",\n'
+                            '  "ingredients": ["..."],\n'
+                            '  "macros": {"protein": 0, "fat": 0, "carbs": 0},\n'
+                            '  "steps": ["..."]\n'
+                            "}"
+                        ),
+                    },
+                    {
+                        "type": "input_image",
+                        "image_url": f"data:image/jpeg;base64,{base64_image}",
+                    },
+                ],
+            }
+        ],
+    )
+
     raw = response.output[0].content[0].text
 
     clean = raw.strip()
