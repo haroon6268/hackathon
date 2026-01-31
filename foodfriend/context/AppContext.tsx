@@ -26,6 +26,26 @@ export type Recipe = {
 	image?: any;
 };
 
+export type Meal = {
+	id: number;
+	title: string;
+	calories: number;
+	date: string;
+	carbs: string;
+	protein: string;
+	fat: string;
+	fiber: string;
+	vitamin_d: string;
+	vitamin_a: string;
+	vitamin_c: string;
+	iron: string;
+	calcium: string;
+	magnesium: string;
+	potassium: string;
+	zinc: string;
+	ingredients: string[];
+};
+
 type AppContextType = {
 	imageUri: string | null;
 	setImageUri: (uri: string | null) => void;

@@ -1,3 +1,4 @@
+import { Meal } from "@/context/AppContext";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -44,7 +45,9 @@ export default function Profile() {
 	const { user } = useUser();
 	const { signOut } = useAuth();
 	const [savedRecipes, setSavedRecipes] = useState<SavedRecipe[]>([]);
+	const [meals, setMeals] = useState<Meal[]>([]);
 	const [loading, setLoading] = useState(true);
+	const [mealsLoading, setMealsLoading] = useState(true);
 
 	const fetchSavedRecipes = async () => {
 		if (!user) return;
@@ -62,9 +65,28 @@ export default function Profile() {
 		}
 	};
 
+	const fetchMeals = async () => {
+		if (!user) return;
+
+		try {
+			const response = await fetch(
+				`${API_URL}/meals/day?user_id=${user.id}&limit=6`,
+			);
+			if (response.ok) {
+				const data = await response.json();
+				setMeals(data);
+			}
+		} catch (error) {
+			console.error("Error fetching meals:", error);
+		} finally {
+			setMealsLoading(false);
+		}
+	};
+
 	useFocusEffect(
 		useCallback(() => {
 			fetchSavedRecipes();
+			fetchMeals();
 		}, [user]),
 	);
 
@@ -110,7 +132,48 @@ export default function Profile() {
 				</View>
 
 				<View style={styles.section}>
-					<Text style={styles.sectionTitle}>Saved Recipes</Text>
+					<View style={styles.sectionHeader}>
+						<Text style={styles.sectionTitle}>Recent Meals</Text>
+						<TouchableOpacity onPress={() => router.push("/meals-history")}>
+							<Text style={styles.viewMoreText}>View more</Text>
+						</TouchableOpacity>
+					</View>
+					{mealsLoading ? (
+						<ActivityIndicator
+							size="small"
+							color={PRIMARY}
+							style={styles.loader}
+						/>
+					) : meals.length === 0 ? (
+						<View style={styles.emptyState}>
+							<Ionicons name="nutrition-outline" size={36} color="#ccc" />
+							<Text style={styles.emptyText}>No meals tracked yet</Text>
+						</View>
+					) : (
+						<View style={styles.mealsGrid}>
+							{meals.map((meal) => (
+								<View key={meal.id} style={styles.mealCard}>
+									<Text style={styles.mealTitle} numberOfLines={1}>
+										{meal.title}
+									</Text>
+									<Text style={styles.mealCalories}>{meal.calories} kcal</Text>
+									<View style={styles.mealMacros}>
+										<Text style={styles.mealMacroText}>{meal.protein} P</Text>
+										<Text style={styles.mealMacroDot}>•</Text>
+										<Text style={styles.mealMacroText}>{meal.carbs} C</Text>
+										<Text style={styles.mealMacroDot}>•</Text>
+										<Text style={styles.mealMacroText}>{meal.fat} F</Text>
+									</View>
+								</View>
+							))}
+						</View>
+					)}
+				</View>
+
+				<View style={styles.section}>
+					<Text style={{ ...styles.sectionTitle, marginBottom: 16 }}>
+						Saved Recipes
+					</Text>
 					{loading ? (
 						<ActivityIndicator
 							size="large"
@@ -139,7 +202,11 @@ export default function Profile() {
 										end={{ x: 1, y: 1 }}
 										style={styles.colorHeader}
 									>
-										<Ionicons name="restaurant" size={32} color="rgba(255,255,255,0.3)" />
+										<Ionicons
+											name="restaurant"
+											size={32}
+											color="rgba(255,255,255,0.3)"
+										/>
 									</LinearGradient>
 									<View style={styles.recipeInfo}>
 										<Text style={styles.recipeTitle} numberOfLines={2}>
@@ -223,12 +290,23 @@ const styles = StyleSheet.create({
 	},
 	section: {
 		flex: 1,
+		marginBottom: 22,
+	},
+	sectionHeader: {
+		flexDirection: "row",
+		justifyContent: "space-between",
+		alignItems: "center",
+		marginBottom: 16,
 	},
 	sectionTitle: {
 		fontSize: 18,
 		fontWeight: "bold",
 		color: "#333",
-		marginBottom: 16,
+	},
+	viewMoreText: {
+		fontSize: 14,
+		color: PRIMARY,
+		fontWeight: "500",
 	},
 	loader: {
 		marginTop: 32,
@@ -294,5 +372,43 @@ const styles = StyleSheet.create({
 	recipeMetaDot: {
 		fontSize: 11,
 		color: "#ccc",
+	},
+	mealsGrid: {
+		flexDirection: "row",
+		flexWrap: "wrap",
+		gap: 10,
+	},
+	mealCard: {
+		width: (width - 52) / 2,
+		backgroundColor: "#f9f9f9",
+		borderRadius: 12,
+		padding: 12,
+		borderLeftWidth: 3,
+		borderLeftColor: "#4CAF50",
+	},
+	mealTitle: {
+		fontSize: 13,
+		fontWeight: "600",
+		color: "#333",
+		marginBottom: 4,
+	},
+	mealCalories: {
+		fontSize: 16,
+		fontWeight: "bold",
+		color: "#4CAF50",
+		marginBottom: 6,
+	},
+	mealMacros: {
+		flexDirection: "row",
+		alignItems: "center",
+	},
+	mealMacroText: {
+		fontSize: 11,
+		color: "#666",
+	},
+	mealMacroDot: {
+		fontSize: 11,
+		color: "#ccc",
+		marginHorizontal: 4,
 	},
 });
