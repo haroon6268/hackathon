@@ -253,7 +253,7 @@ async def meal_day(
                                     f"{json.dumps(meal_dicts)}\n\n"
                                     "Return ONLY valid JSON in this exact format:\n"
                                     "{\n"
-                                    '  "score": 0,\n'
+                                    '  "rating": 0,\n'
                                     '  "explanation": "string"\n'
                                     "}"
                                 ),
@@ -265,15 +265,14 @@ async def meal_day(
             raw = response.output[0].content[0].text
             clean = raw.strip()
             parsed = json.loads(clean)
-            db_analysis = model.Analysis()
+            db_analysis = model.Analysis(**parsed)
             db_analysis.date = datetime.now()
-            db_analysis.analyze = parsed
             db_analysis.user_id = user_id
             db.add(db_analysis)
             db.commit()
             db.refresh(db_analysis)
 
-            return db_analysis.analyze
+            return db_analysis
 
 
 @app.get("/hello/{name}")
