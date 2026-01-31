@@ -2,7 +2,9 @@ import base64
 import os
 from dotenv import load_dotenv
 from fastapi import FastAPI, UploadFile, File
+from fastApiProject.schemas import UserInput
 from recipe import Recipe
+from fastApiProject.ai import extract_recipe_request, generate_recipe
 
 
 app = FastAPI()
@@ -73,6 +75,20 @@ async def root(file: UploadFile = File(...)):
 
     return recipe
 
+
+@app.post("/chat", response_model=Recipe)
+def chat(input: UserInput):
+    #this is user input
+    message = input.message
+
+    #what does the user want?
+    request = extract_recipe_request(message)
+
+    #create recipe
+    recipe = generate_recipe(request)
+
+    # return to user
+    return recipe
 
 # "From the given image create a recipe using the ingredients in the image include the ingredients and macros in the given pydantic model format
 @app.get("/hello/{name}")
