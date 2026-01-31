@@ -1,6 +1,6 @@
 import { RecipeCard } from "@/components/RecipeCard";
 import { Recipe } from "@/context/AppContext";
-import { useAuth } from "@clerk/clerk-expo";
+import { useAuth, useUser } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
@@ -25,6 +25,7 @@ const CATEGORIES = [
 
 const RecipeList = () => {
 	const { signOut } = useAuth();
+	const { user } = useUser();
 	const SAMPLE_RECIPES: Recipe[] = [
 		{
 			id: 1,
@@ -122,7 +123,7 @@ const RecipeList = () => {
 	return (
 		<SafeAreaView style={styles.container}>
 			<View style={styles.header}>
-				<Text style={styles.greeting}>Hello Friend!</Text>
+				<Text style={styles.greeting}>Hello {user?.firstName || "Friend"}!</Text>
 				<TouchableOpacity onPress={() => signOut()}>
 					<Ionicons name="log-out-outline" size={24} color="#666" />
 				</TouchableOpacity>
