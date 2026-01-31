@@ -1,4 +1,5 @@
-import { Text, View, StyleSheet, TouchableOpacity, Image, ImageSourcePropType } from "react-native";
+import { Image } from "expo-image";
+import { Text, View, StyleSheet, TouchableOpacity } from "react-native";
 import { Recipe } from "@/context/AppContext";
 
 type RecipeCardProps = {
@@ -10,7 +11,13 @@ export function RecipeCard({ recipe, onPress }: RecipeCardProps) {
   return (
     <TouchableOpacity style={styles.card} onPress={onPress}>
       {recipe.image && (
-        <Image source={recipe.image} style={styles.image} />
+        <Image
+          source={recipe.image}
+          style={styles.image}
+          contentFit="cover"
+          cachePolicy="memory-disk"
+          transition={200}
+        />
       )}
       <View style={styles.textContainer}>
         <Text style={styles.recipeName} numberOfLines={1}>{recipe.name}</Text>
@@ -36,7 +43,6 @@ const styles = StyleSheet.create({
   image: {
     width: "100%",
     height: 175,
-    resizeMode: "cover",
   },
   textContainer: {
     padding: 12,

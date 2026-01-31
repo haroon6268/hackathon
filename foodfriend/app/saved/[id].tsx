@@ -1,10 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
+import { Image, ImageSource } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
 	ActivityIndicator,
-	Image,
-	ImageSourcePropType,
 	SafeAreaView,
 	ScrollView,
 	StyleSheet,
@@ -16,7 +15,7 @@ import {
 const PRIMARY = "#E9724C";
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
-const CATEGORY_IMAGES: Record<string, ImageSourcePropType> = {
+const CATEGORY_IMAGES: Record<string, ImageSource> = {
 	pizza: require("@/assets/images/cat_pizza.png"),
 	pasta: require("@/assets/images/pasta_cat.png"),
 	salad: require("@/assets/images/salad_cat.png"),
@@ -87,7 +86,13 @@ export default function SavedRecipeDetail() {
 	return (
 		<View style={styles.container}>
 			<View style={styles.imageContainer}>
-				<Image source={recipeImage} style={styles.image} />
+				<Image
+					source={recipeImage}
+					style={styles.image}
+					contentFit="cover"
+					cachePolicy="memory-disk"
+					transition={200}
+				/>
 				<SafeAreaView style={styles.imageOverlay}>
 					<TouchableOpacity
 						onPress={() => router.back()}
@@ -161,7 +166,6 @@ const styles = StyleSheet.create({
 	image: {
 		width: "100%",
 		height: "100%",
-		resizeMode: "cover",
 	},
 	imageOverlay: {
 		position: "absolute",

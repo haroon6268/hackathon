@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import {
+	Dimensions,
 	SafeAreaView,
 	ScrollView,
 	StyleSheet,
@@ -8,9 +9,11 @@ import {
 	TouchableOpacity,
 	View,
 } from "react-native";
+import { PieChart } from "react-native-chart-kit";
 
 const PRIMARY = "#E9724C";
 const GREEN = "#4CAF50";
+const screenWidth = Dimensions.get("window").width;
 
 type Meal = {
 	title: string;
@@ -32,9 +35,13 @@ type Meal = {
 };
 
 export default function MealTracked() {
-	const { meal: mealParam } = useLocalSearchParams<{ meal: string }>();
+	const { meal: mealParam, fromHistory } = useLocalSearchParams<{
+		meal: string;
+		fromHistory?: string;
+	}>();
 
 	const meal: Meal | null = mealParam ? JSON.parse(mealParam) : null;
+	const isFromHistory = fromHistory === "true";
 
 	if (!meal) {
 		return (
@@ -44,11 +51,35 @@ export default function MealTracked() {
 		);
 	}
 
-	const macros = [
-		{ label: "Calories", value: `${meal.calories}`, unit: "kcal", color: "#FF6B6B" },
-		{ label: "Protein", value: meal.protein, unit: "", color: "#4ECDC4" },
-		{ label: "Carbs", value: meal.carbs, unit: "", color: "#FFE66D" },
-		{ label: "Fat", value: meal.fat, unit: "", color: "#95E1D3" },
+	// Parse macro values (remove 'g' suffix if present)
+	const parseGrams = (val: string) =>
+		parseFloat(val.replace(/[^0-9.]/g, "")) || 0;
+	const proteinGrams = parseGrams(meal.protein);
+	const carbsGrams = parseGrams(meal.carbs);
+	const fatGrams = parseGrams(meal.fat);
+
+	const pieData = [
+		{
+			name: "Protein",
+			grams: proteinGrams,
+			color: "#4ECDC4",
+			legendFontColor: "#333",
+			legendFontSize: 14,
+		},
+		{
+			name: "Carbs",
+			grams: carbsGrams,
+			color: "#FFE66D",
+			legendFontColor: "#333",
+			legendFontSize: 14,
+		},
+		{
+			name: "Fat",
+			grams: fatGrams,
+			color: "#95E1D3",
+			legendFontColor: "#333",
+			legendFontSize: 14,
+		},
 	];
 
 	const nutrients = [
@@ -66,28 +97,69 @@ export default function MealTracked() {
 	return (
 		<SafeAreaView style={styles.container}>
 			<View style={styles.header}>
-				<TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+				<TouchableOpacity
+					onPress={() => router.back()}
+					style={styles.backButton}
+				>
 					<Ionicons name="arrow-back" size={24} color={PRIMARY} />
 				</TouchableOpacity>
-				<Text style={styles.headerTitle}>Meal Tracked</Text>
-				<View style={styles.checkBadge}>
-					<Ionicons name="checkmark" size={20} color="#fff" />
-				</View>
+				<Text style={styles.headerTitle}>
+					{isFromHistory ? "Meal Details" : "Meal Tracked"}
+				</Text>
+				{!isFromHistory && (
+					<View style={styles.checkBadge}>
+						<Ionicons name="checkmark" size={20} color="#fff" />
+					</View>
+				)}
 			</View>
 
-			<ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+			<ScrollView
+				style={styles.scrollView}
+				contentContainerStyle={styles.scrollContent}
+			>
 				<Text style={styles.title}>{meal.title}</Text>
-
-				<View style={styles.macrosGrid}>
-					{macros.map((macro) => (
-						<View key={macro.label} style={[styles.macroCard, { borderLeftColor: macro.color }]}>
-							<Text style={styles.macroValue}>
-								{macro.value}
-								{macro.unit && <Text style={styles.macroUnit}> {macro.unit}</Text>}
-							</Text>
-							<Text style={styles.macroLabel}>{macro.label}</Text>
+				<View style={styles.caloriesCard}>
+					<Text style={styles.caloriesValue}>{meal.calories}</Text>
+					<Text style={styles.caloriesLabel}>calories</Text>
+				</View>
+				<View style={styles.chartSection}>
+					<Text style={styles.sectionTitle}>Macros</Text>
+					<View style={styles.chartContainer}>
+						<PieChart
+							data={pieData}
+							width={screenWidth}
+							height={200}
+							chartConfig={{
+								color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+							}}
+							accessor="grams"
+							backgroundColor="transparent"
+							paddingLeft="0"
+							center={[100, 0]}
+							hasLegend={false}
+							absolute
+						/>
+					</View>
+					<View style={styles.macroLegend}>
+						<View style={styles.legendItem}>
+							<View
+								style={[styles.legendDot, { backgroundColor: "#4ECDC4" }]}
+							/>
+							<Text style={styles.legendText}>Protein: {meal.protein}</Text>
 						</View>
-					))}
+						<View style={styles.legendItem}>
+							<View
+								style={[styles.legendDot, { backgroundColor: "#FFE66D" }]}
+							/>
+							<Text style={styles.legendText}>Carbs: {meal.carbs}</Text>
+						</View>
+						<View style={styles.legendItem}>
+							<View
+								style={[styles.legendDot, { backgroundColor: "#95E1D3" }]}
+							/>
+							<Text style={styles.legendText}>Fat: {meal.fat}</Text>
+						</View>
+					</View>
 				</View>
 
 				<View style={styles.section}>
@@ -115,12 +187,14 @@ export default function MealTracked() {
 					</View>
 				)}
 
-				<TouchableOpacity
-					style={styles.doneButton}
-					onPress={() => router.replace("/(tabs)")}
-				>
-					<Text style={styles.doneButtonText}>Done</Text>
-				</TouchableOpacity>
+				{!isFromHistory && (
+					<TouchableOpacity
+						style={styles.doneButton}
+						onPress={() => router.replace("/(tabs)")}
+					>
+						<Text style={styles.doneButtonText}>Done</Text>
+					</TouchableOpacity>
+				)}
 			</ScrollView>
 		</SafeAreaView>
 	);
@@ -163,38 +237,59 @@ const styles = StyleSheet.create({
 		padding: 20,
 	},
 	title: {
-		fontSize: 28,
+		fontSize: 26,
 		fontWeight: "bold",
 		color: "#333",
-		marginBottom: 24,
+		marginBottom: 16,
 	},
-	macrosGrid: {
-		flexDirection: "row",
-		flexWrap: "wrap",
-		gap: 12,
-		marginBottom: 32,
-	},
-	macroCard: {
-		width: "47%",
-		backgroundColor: "#f9f9f9",
+	caloriesCard: {
+		backgroundColor: "#FF6B6B",
 		borderRadius: 12,
-		padding: 16,
-		borderLeftWidth: 4,
+		paddingVertical: 12,
+		paddingHorizontal: 20,
+		alignSelf: "flex-start",
+		flexDirection: "row",
+		alignItems: "baseline",
+		gap: 6,
+		marginBottom: 20,
 	},
-	macroValue: {
+	caloriesValue: {
 		fontSize: 24,
 		fontWeight: "bold",
+		color: "#fff",
+	},
+	caloriesLabel: {
+		fontSize: 14,
+		color: "rgba(255,255,255,0.9)",
+	},
+	chartSection: {
+		marginBottom: 24,
+	},
+	chartContainer: {
+		flex: 1,
+		justifyContent: "center",
+		alignItems: "center",
+		marginVertical: 8,
+	},
+	macroLegend: {
+		flexDirection: "row",
+		justifyContent: "space-around",
+		marginTop: 8,
+	},
+	legendItem: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: 6,
+	},
+	legendDot: {
+		width: 12,
+		height: 12,
+		borderRadius: 6,
+	},
+	legendText: {
+		fontSize: 13,
 		color: "#333",
-	},
-	macroUnit: {
-		fontSize: 14,
-		fontWeight: "normal",
-		color: "#666",
-	},
-	macroLabel: {
-		fontSize: 14,
-		color: "#666",
-		marginTop: 4,
+		fontWeight: "500",
 	},
 	section: {
 		marginBottom: 24,
