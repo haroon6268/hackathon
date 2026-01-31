@@ -1,15 +1,18 @@
 import { AppProvider } from "@/context/AppContext";
+import { ClerkProvider } from "@clerk/clerk-expo";
+import { tokenCache } from "@clerk/clerk-expo/token-cache";
 import { Stack } from "expo-router";
 
 export default function RootLayout() {
-	console.log(process.env.EXPO_PUBLIC_API_URL);
 	return (
-		<AppProvider>
-			<Stack
-				screenOptions={{
-					headerShown: false,
-				}}
-			/>
-		</AppProvider>
+		<ClerkProvider tokenCache={tokenCache}>
+			<AppProvider>
+				<Stack
+					screenOptions={{
+						headerShown: false,
+					}}
+				/>
+			</AppProvider>
+		</ClerkProvider>
 	);
 }
