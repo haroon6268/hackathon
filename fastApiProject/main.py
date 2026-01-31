@@ -122,7 +122,7 @@ async def save_recipe(
     db.refresh(db_recipe)
 
 
-@app.get("recipe")
+@app.get("/recipe")
 async def get_all_recipe(user_id: str, db: Annotated[Session, Depends(get_db)]):
     allRecipes = db.query(model.Recipe).filter(model.Recipe.user_id == user_id).all()
     return allRecipes
