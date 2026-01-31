@@ -129,6 +129,10 @@ async def get_user_recipe(user_id: str, db: Annotated[Session, Depends(get_db)])
     allRecipes = db.query(model.Recipe).filter(model.Recipe.user_id == user_id).all()
     return allRecipes
 
+@app.get("/recipe/{id}")
+async def get_recipe_by_id(id: int, db: Annotated[Session, Depends(get_db)]):
+    recipe = db.query(model.Recipe).filter(model.Recipe.id == id).first()
+    return recipe
 
 @app.get("/global_recipe")
 async def get_all_recipe(
