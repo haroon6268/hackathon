@@ -11,6 +11,6 @@ class Ingredients(BaseModel):
 
 class Recipe(BaseModel):
     title: str
-    ingredients: List[str]
+    ingredients: List[Ingredients]
     macros: Dict[str, float]
     steps: List[str]

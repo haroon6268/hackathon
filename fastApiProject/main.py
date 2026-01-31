@@ -34,7 +34,9 @@ async def root(file: UploadFile = File(...)):
                             "Return ONLY valid JSON in this format:\n"
                             "{\n"
                             '  "title": "...",\n'
-                            '  "ingredients": ["..."],\n'
+                            '  "ingredients": [\n'
+                            '    { "name": "string", "quantity": "float", "unit": "string",}\n'
+                            "  ],\n"
                             '  "macros": {"protein": 0, "fat": 0, "carbs": 0},\n'
                             '  "steps": ["..."]\n'
                             "}"
