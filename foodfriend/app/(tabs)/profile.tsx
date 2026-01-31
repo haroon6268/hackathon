@@ -4,7 +4,9 @@ import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import {
 	ActivityIndicator,
+	Dimensions,
 	Image,
+	ImageSourcePropType,
 	SafeAreaView,
 	ScrollView,
 	StyleSheet,
@@ -16,12 +18,26 @@ import {
 const PRIMARY = "#E9724C";
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
+const { width } = Dimensions.get("window");
+const CARD_WIDTH = (width - 48) / 2;
+
+const CATEGORY_IMAGES: Record<string, ImageSourcePropType> = {
+	pizza: require("@/assets/images/cat_pizza.png"),
+	pasta: require("@/assets/images/pasta_cat.png"),
+	salad: require("@/assets/images/salad_cat.png"),
+	burger: require("@/assets/images/burger_cat.png"),
+	sushi: require("@/assets/images/sushi_cat.png"),
+	tacos: require("@/assets/images/tacos_cat.png"),
+	other: require("@/assets/images/other_cat.png"),
+};
+
 type SavedRecipe = {
 	id: number;
 	title: string;
 	ingredients: { name: string; quantity: number; unit: string }[];
 	macros: { protein?: number; carbs?: number; fat?: number };
 	steps: string[];
+	category?: string;
 };
 
 export default function Profile() {
@@ -99,20 +115,25 @@ export default function Profile() {
 							</Text>
 						</View>
 					) : (
-						<View style={styles.recipeList}>
+						<View style={styles.grid}>
 							{savedRecipes.map((recipe) => (
 								<TouchableOpacity
 									key={recipe.id}
 									style={styles.recipeCard}
 									onPress={() => openRecipe(recipe)}
 								>
+									<Image
+										source={CATEGORY_IMAGES[recipe.category || "other"] || CATEGORY_IMAGES.other}
+										style={styles.recipeImage}
+									/>
 									<View style={styles.recipeInfo}>
-										<Text style={styles.recipeTitle}>{recipe.title}</Text>
+										<Text style={styles.recipeTitle} numberOfLines={2}>
+											{recipe.title}
+										</Text>
 										<Text style={styles.recipeMeta}>
 											{recipe.ingredients.length} ingredients
 										</Text>
 									</View>
-									<Ionicons name="chevron-forward" size={20} color="#ccc" />
 								</TouchableOpacity>
 							))}
 						</View>
@@ -203,27 +224,38 @@ const styles = StyleSheet.create({
 		color: "#999",
 		marginTop: 4,
 	},
-	recipeList: {
-		gap: 12,
+	grid: {
+		flexDirection: "row",
+		flexWrap: "wrap",
+		gap: 16,
 	},
 	recipeCard: {
-		flexDirection: "row",
-		alignItems: "center",
-		padding: 16,
-		backgroundColor: "#f9f9f9",
-		borderRadius: 12,
+		width: CARD_WIDTH,
+		backgroundColor: "#fff",
+		borderRadius: 16,
+		overflow: "hidden",
+		shadowColor: "#000",
+		shadowOffset: { width: 0, height: 2 },
+		shadowOpacity: 0.1,
+		shadowRadius: 4,
+		elevation: 3,
+	},
+	recipeImage: {
+		width: "100%",
+		height: CARD_WIDTH,
+		resizeMode: "cover",
 	},
 	recipeInfo: {
-		flex: 1,
+		padding: 12,
 	},
 	recipeTitle: {
-		fontSize: 16,
+		fontSize: 14,
 		fontWeight: "600",
 		color: "#333",
-		marginBottom: 2,
+		marginBottom: 4,
 	},
 	recipeMeta: {
-		fontSize: 13,
-		color: "#666",
+		fontSize: 12,
+		color: "#999",
 	},
 });

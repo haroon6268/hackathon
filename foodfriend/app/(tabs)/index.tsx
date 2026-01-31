@@ -3,9 +3,12 @@ import { Recipe } from "@/context/AppContext";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import React from "react";
+import { router } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
+	ActivityIndicator,
 	Image,
+	ImageSourcePropType,
 	ScrollView,
 	StyleSheet,
 	Text,
@@ -14,116 +17,69 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
+
+const CATEGORY_IMAGES: Record<string, ImageSourcePropType> = {
+	pizza: require("@/assets/images/cat_pizza.png"),
+	pasta: require("@/assets/images/pasta_cat.png"),
+	salad: require("@/assets/images/salad_cat.png"),
+	burger: require("@/assets/images/burger_cat.png"),
+	sushi: require("@/assets/images/sushi_cat.png"),
+	tacos: require("@/assets/images/tacos_cat.png"),
+	other: require("@/assets/images/other_cat.png"),
+};
+
 const CATEGORIES = [
-	{ name: "Pizza", image: require("@/assets/images/pizza.png") },
-	{ name: "Pasta", image: require("@/assets/images/pasta.png") },
-	{ name: "Salad", image: require("@/assets/images/salad.png") },
-	{ name: "Burger", image: require("@/assets/images/burger.png") },
-	{ name: "Sushi", image: require("@/assets/images/sushi.png") },
-	{ name: "Tacos", image: require("@/assets/images/tacos.png") },
+	{ name: "Pizza", key: "pizza", image: require("@/assets/images/pizza.png") },
+	{ name: "Pasta", key: "pasta", image: require("@/assets/images/pasta.png") },
+	{ name: "Salad", key: "salad", image: require("@/assets/images/salad.png") },
+	{
+		name: "Burger",
+		key: "burger",
+		image: require("@/assets/images/burger.png"),
+	},
+	{ name: "Sushi", key: "sushi", image: require("@/assets/images/sushi.png") },
+	{ name: "Tacos", key: "tacos", image: require("@/assets/images/tacos.png") },
 ];
 
 const RecipeList = () => {
 	const { signOut } = useAuth();
 	const { user } = useUser();
-	const SAMPLE_RECIPES: Recipe[] = [
-		{
-			id: 1,
-			name: "Veggie Stir Fry",
-			description: "Quick and healthy stir fry with seasonal vegetables",
-			time: "20 min",
-			servings: 2,
-			ingredients: [
-				{ name: "Bell peppers", quantity: 2, unit: "pieces" },
-				{ name: "Broccoli", quantity: 1, unit: "cup" },
-				{ name: "Carrots", quantity: 2, unit: "pieces" },
-				{ name: "Soy sauce", quantity: 2, unit: "tbsp" },
-				{ name: "Garlic", quantity: 3, unit: "cloves" },
-				{ name: "Ginger", quantity: 1, unit: "inch" },
-			],
-			instructions: [
-				"Chop all vegetables into bite-sized pieces",
-				"Heat oil in a wok over high heat",
-				"Add garlic and ginger, stir for 30 seconds",
-				"Add vegetables and stir fry for 5-7 minutes",
-				"Add soy sauce and toss to coat",
-			],
-			image: require("@/assets/images/veggie_stir_fry.jpg"),
-			category: "other",
-		},
-		{
-			id: 2,
-			name: "Pasta Primavera",
-			description: "Classic Italian pasta with fresh garden vegetables",
-			time: "25 min",
-			servings: 4,
-			ingredients: [
-				{ name: "Pasta", quantity: 400, unit: "g" },
-				{ name: "Zucchini", quantity: 1, unit: "piece" },
-				{ name: "Tomatoes", quantity: 2, unit: "pieces" },
-				{ name: "Parmesan", quantity: 0.5, unit: "cup" },
-				{ name: "Olive oil", quantity: 3, unit: "tbsp" },
-				{ name: "Basil", quantity: 1, unit: "handful" },
-			],
-			instructions: [
-				"Cook pasta according to package directions",
-				"Sauté zucchini in olive oil until tender",
-				"Add tomatoes and cook for 2 minutes",
-				"Toss with drained pasta",
-				"Top with parmesan and fresh basil",
-			],
-			image: require("@/assets/images/pasta_primavera.jpg"),
-			category: "other",
-		},
-		{
-			id: 3,
-			name: "Chicken Salad",
-			description: "Light and refreshing salad with grilled chicken",
-			time: "15 min",
-			servings: 2,
-			ingredients: [
-				{ name: "Chicken breast", quantity: 2, unit: "pieces" },
-				{ name: "Mixed greens", quantity: 4, unit: "cups" },
-				{ name: "Cucumber", quantity: 1, unit: "piece" },
-				{ name: "Cherry tomatoes", quantity: 1, unit: "cup" },
-				{ name: "Olive oil", quantity: 2, unit: "tbsp" },
-				{ name: "Lemon", quantity: 1, unit: "piece" },
-			],
-			instructions: [
-				"Grill chicken breast until cooked through",
-				"Let chicken rest, then slice",
-				"Arrange greens on plates",
-				"Top with cucumber, tomatoes, and chicken",
-				"Drizzle with olive oil and lemon juice",
-			],
-			image: require("@/assets/images/chicken_salad.jpg"),
-			category: "other",
-		},
-		{
-			id: 4,
-			name: "Mushroom Omelette",
-			description: "Fluffy eggs with sautéed mushrooms and herbs",
-			time: "10 min",
-			servings: 1,
-			ingredients: [
-				{ name: "Eggs", quantity: 3, unit: "pieces" },
-				{ name: "Mushrooms", quantity: 1, unit: "cup" },
-				{ name: "Butter", quantity: 1, unit: "tbsp" },
-				{ name: "Chives", quantity: 1, unit: "tbsp" },
-				{ name: "Salt", quantity: 1, unit: "pinch" },
-				{ name: "Pepper", quantity: 1, unit: "pinch" },
-			],
-			instructions: [
-				"Sauté sliced mushrooms in butter",
-				"Beat eggs with salt and pepper",
-				"Pour eggs into pan over medium heat",
-				"Add mushrooms to one side",
-				"Fold omelette and serve with chives",
-			],
-			image: require("@/assets/images/mushroom_omlette.jpg"),
-			category: "other",
-		},
-	];
+	const [recipes, setRecipes] = useState<Recipe[]>([]);
+	const [loading, setLoading] = useState(true);
+
+	const fetchRecipes = async () => {
+		try {
+			const response = await fetch(`${API_URL}/global_recipe?limit=10`);
+			if (response.ok) {
+				const data = await response.json();
+				const mappedRecipes: Recipe[] = data.map((item: any) => ({
+					id: item.id,
+					name: item.title,
+					description: item.macros
+						? `${item.macros.protein || 0}g protein, ${item.macros.carbs || 0}g carbs, ${item.macros.fat || 0}g fat`
+						: "",
+					time: "30 min",
+					servings: 1,
+					ingredients: item.ingredients,
+					instructions: item.steps,
+					category: item.category,
+					macros: item.macros,
+					image: CATEGORY_IMAGES[item.category] || CATEGORY_IMAGES.other,
+				}));
+				setRecipes(mappedRecipes);
+			}
+		} catch (error) {
+			console.error("Error fetching recipes:", error);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	useEffect(() => {
+		fetchRecipes();
+	}, []);
+
 	return (
 		<SafeAreaView style={styles.container}>
 			<View style={styles.header}>
@@ -141,7 +97,10 @@ const RecipeList = () => {
 				contentContainerStyle={styles.categoryContainer}
 			>
 				{CATEGORIES.map((category) => (
-					<TouchableOpacity key={category.name}>
+					<TouchableOpacity
+						key={category.key}
+						onPress={() => router.push(`/category/${category.key}`)}
+					>
 						<LinearGradient
 							colors={["#FFD166", "#F4A623"]}
 							start={{ x: 0, y: 0 }}
@@ -154,16 +113,23 @@ const RecipeList = () => {
 					</TouchableOpacity>
 				))}
 			</ScrollView>
-			<ScrollView
-				horizontal
-				showsHorizontalScrollIndicator={false}
-				style={styles.recipeScroll}
-				contentContainerStyle={styles.recipeContainer}
-			>
-				{SAMPLE_RECIPES.map((recipe) => (
-					<RecipeCard key={recipe.id} recipe={recipe} onPress={() => {}} />
-				))}
-			</ScrollView>
+
+			{loading ? (
+				<View style={styles.loadingContainer}>
+					<ActivityIndicator size="large" color="#E9724C" />
+				</View>
+			) : (
+				<ScrollView
+					horizontal
+					showsHorizontalScrollIndicator={false}
+					style={styles.recipeScroll}
+					contentContainerStyle={styles.recipeContainer}
+				>
+					{recipes.map((recipe) => (
+						<RecipeCard key={recipe.id} recipe={recipe} onPress={() => router.push(`/saved/${recipe.id}`)} />
+					))}
+				</ScrollView>
+			)}
 		</SafeAreaView>
 	);
 };
@@ -219,6 +185,12 @@ const styles = StyleSheet.create({
 		color: "#fff",
 		fontWeight: "600",
 		fontSize: 14,
+	},
+	loadingContainer: {
+		flex: 1,
+		justifyContent: "center",
+		alignItems: "center",
+		paddingVertical: 60,
 	},
 	recipeScroll: {
 		marginTop: 8,

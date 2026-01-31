@@ -3,6 +3,8 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
 	ActivityIndicator,
+	Image,
+	ImageSourcePropType,
 	SafeAreaView,
 	ScrollView,
 	StyleSheet,
@@ -14,12 +16,23 @@ import {
 const PRIMARY = "#E9724C";
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
+const CATEGORY_IMAGES: Record<string, ImageSourcePropType> = {
+	pizza: require("@/assets/images/cat_pizza.png"),
+	pasta: require("@/assets/images/pasta_cat.png"),
+	salad: require("@/assets/images/salad_cat.png"),
+	burger: require("@/assets/images/burger_cat.png"),
+	sushi: require("@/assets/images/sushi_cat.png"),
+	tacos: require("@/assets/images/tacos_cat.png"),
+	other: require("@/assets/images/other_cat.png"),
+};
+
 type SavedRecipe = {
 	id: number;
 	title: string;
 	ingredients: { name: string; quantity: number; unit: string }[];
 	macros: { protein?: number; carbs?: number; fat?: number };
 	steps: string[];
+	category?: string;
 };
 
 export default function SavedRecipeDetail() {
@@ -69,22 +82,27 @@ export default function SavedRecipeDetail() {
 		? `${recipe.macros.protein || 0}g protein, ${recipe.macros.carbs || 0}g carbs, ${recipe.macros.fat || 0}g fat`
 		: "";
 
+	const recipeImage = CATEGORY_IMAGES[recipe.category || "other"] || CATEGORY_IMAGES.other;
+
 	return (
-		<SafeAreaView style={styles.container}>
-			<View style={styles.header}>
-				<TouchableOpacity
-					onPress={() => router.back()}
-					style={styles.backButton}
-				>
-					<Ionicons name="arrow-back" size={24} color={PRIMARY} />
-				</TouchableOpacity>
-				<Text style={styles.headerTitle}>{recipe.title}</Text>
+		<View style={styles.container}>
+			<View style={styles.imageContainer}>
+				<Image source={recipeImage} style={styles.image} />
+				<SafeAreaView style={styles.imageOverlay}>
+					<TouchableOpacity
+						onPress={() => router.back()}
+						style={styles.backButton}
+					>
+						<Ionicons name="arrow-back" size={24} color="#fff" />
+					</TouchableOpacity>
+				</SafeAreaView>
 			</View>
 
 			<ScrollView
 				style={styles.scrollView}
 				contentContainerStyle={styles.scrollContent}
 			>
+				<Text style={styles.title}>{recipe.title}</Text>
 				<Text style={styles.description}>{description}</Text>
 
 				<View style={styles.metaRow}>
@@ -122,7 +140,7 @@ export default function SavedRecipeDetail() {
 					))}
 				</View>
 			</ScrollView>
-		</SafeAreaView>
+		</View>
 	);
 }
 
@@ -136,28 +154,41 @@ const styles = StyleSheet.create({
 		alignItems: "center",
 		justifyContent: "center",
 	},
-	header: {
-		flexDirection: "row",
-		alignItems: "center",
-		padding: 16,
-		borderBottomWidth: 1,
-		borderBottomColor: "#eee",
-		gap: 12,
+	imageContainer: {
+		height: 250,
+		backgroundColor: "#f0f0f0",
+	},
+	image: {
+		width: "100%",
+		height: "100%",
+		resizeMode: "cover",
+	},
+	imageOverlay: {
+		position: "absolute",
+		top: 0,
+		left: 0,
+		right: 0,
 	},
 	backButton: {
-		padding: 4,
-	},
-	headerTitle: {
-		fontSize: 20,
-		fontWeight: "bold",
-		color: "#333",
-		flex: 1,
+		margin: 16,
+		width: 40,
+		height: 40,
+		borderRadius: 20,
+		backgroundColor: "rgba(0,0,0,0.3)",
+		alignItems: "center",
+		justifyContent: "center",
 	},
 	scrollView: {
 		flex: 1,
 	},
 	scrollContent: {
-		padding: 16,
+		padding: 20,
+	},
+	title: {
+		fontSize: 24,
+		fontWeight: "bold",
+		color: "#333",
+		marginBottom: 8,
 	},
 	description: {
 		fontSize: 16,
