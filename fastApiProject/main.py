@@ -8,12 +8,12 @@ import model
 from sqlalchemy import inspect
 from typing import Annotated
 from database import get_db, Session
+from datetime import datetime, timedelta
 
 app = FastAPI()
 load_dotenv()
 import json
 from openai import AsyncOpenAI
-import datetime
 
 
 open_ai_key = os.getenv("OPENAI_API_KEY")
@@ -167,13 +167,31 @@ async def log_meal(
     data = json.loads(clean)
 
     db_meal = model.Meals(**data)
-    db_meal.date = datetime.datetime.now()
+    db_meal.date = datetime.now()
     db_meal.user_id = user_id
     db.add(db_meal)
     db.commit()
     db.refresh(db_meal)
 
     return db_meal
+
+
+@app.get("/meals/day")
+async def meal_day(
+    date: datetime, user_id: str, db: Annotated[Session, Depends(get_db)]
+):
+    start = datetime(date.year, date.month, date.day)
+    end = start + timedelta(days=1)
+
+    meals_in_day = (
+        db.query(model.Meals)
+        .filter(model.Meals.date >= start)
+        .filter(model.Meals.date < end)
+        .filter(model.Meals.user_id == user_id)
+        .all()
+    )
+
+    return meals_in_day
 
 
 @app.get("/hello/{name}")
