@@ -13,6 +13,7 @@ app = FastAPI()
 load_dotenv()
 import json
 from openai import AsyncOpenAI
+import datetime
 
 
 open_ai_key = os.getenv("OPENAI_API_KEY")
@@ -37,6 +38,7 @@ inspector = inspect(engine)
 tables = inspector.get_table_names()
 if not tables:
     create_tables()
+model.Base.metadata.create_all(bind=engine)
 
 
 @app.post("/")
@@ -101,7 +103,9 @@ async def root(file: UploadFile = File(...)):
 
 
 @app.post("/track_meal")
-async def log_meal(file: UploadFile = File(...)):
+async def log_meal(
+    db: Annotated[Session, Depends(get_db)], user_id: str, file: UploadFile = File(...)
+):
     contents = await file.read()
     base64_image = base64.b64encode(contents).decode("utf-8")
     response = await client.responses.create(
@@ -118,12 +122,20 @@ async def log_meal(file: UploadFile = File(...)):
                             "Return ONLY valid JSON in this exact format. "
                             "{\n"
                             '  "title": "string",\n'
-                            '  "ingredients": [\n'
-                            '    { "name": "string", "quantity": 0, "unit": "string" }\n'
-                            "  ],\n"
                             '  "calories": 0,\n'
-                            '  "ingredients": ["string"],\n'
-                            '  "category": "string"\n'
+                            '  "carbs": "string",\n'
+                            '  "protein": "string",\n'
+                            '  "fat": "string",\n'
+                            '  "fiber": "string",\n'
+                            '  "vitamin_d": "string",\n'
+                            '  "vitamin_a": "string",\n'
+                            '  "vitamin_c": "string",\n'
+                            '  "iron": "string",\n'
+                            '  "calcium": "string",\n'
+                            '  "magnesium": "string",\n'
+                            '  "potassium": "string",\n'
+                            '  "zinc": "string",\n'
+                            '  "ingredients": ["string"]\n'
                             "}"
                         ),
                     },
@@ -154,9 +166,14 @@ async def log_meal(file: UploadFile = File(...)):
 
     data = json.loads(clean)
 
-    recipe = Recipe(**data)
+    db_meal = model.Meals(**data)
+    db_meal.date = datetime.datetime.now()
+    db_meal.user_id = user_id
+    db.add(db_meal)
+    db.commit()
+    db.refresh(db_meal)
 
-    return recipe
+    return db_meal
 
 
 @app.get("/hello/{name}")

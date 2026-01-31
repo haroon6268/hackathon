@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from datetime import datetime
 from typing import List, Dict
 from typing import Optional
 
@@ -20,6 +21,7 @@ class Recipe(BaseModel):
 class Meals(BaseModel):
     title: str
     calories: int
+    date: datetime
     carbs: str
     protein: str
     fat: str

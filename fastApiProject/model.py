@@ -1,4 +1,14 @@
-from sqlalchemy import Column, Integer, String, Boolean, Double, ForeignKey, Date, JSON
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Boolean,
+    Double,
+    ForeignKey,
+    Date,
+    JSON,
+    DateTime,
+)
 from sqlalchemy.orm import relationship
 from database import Base
 from enum import Enum
@@ -15,6 +25,9 @@ class User(Base):
     recipes = relationship(
         "Recipe", back_populates="user", cascade="all, delete-orphan", lazy="selectin"
     )
+    meals = relationship(
+        "Meals", back_populates="user", cascade="all, delete-orphan", lazy="selectin"
+    )
 
 
 class Recipe(Base):
@@ -22,7 +35,7 @@ class Recipe(Base):
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     title = Column(String(100), nullable=False)
-    category = Column(String(100))
+    category = Column(String(100), nullable=False)
     macros = Column(JSON, nullable=False)
     steps = Column(JSON, nullable=False)
 
@@ -53,6 +66,7 @@ class Meals(Base):
     __tablename__ = "meals"
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     title = Column(String(100), nullable=False)
+    date = Column(DateTime(timezone=True))
     calories = Column(Integer, nullable=False)
     carbs = Column(String(100))
     protein = Column(String(100))
@@ -67,3 +81,5 @@ class Meals(Base):
     potassium = Column(String(100))
     zinc = Column(String(100))
     ingredients = Column(JSON)
+    user_id = Column(String(100), ForeignKey("users.id"), nullable=False)
+    user = relationship("User", back_populates="meals")
