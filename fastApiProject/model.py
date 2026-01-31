@@ -22,7 +22,7 @@ class Recipe(Base):
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     title = Column(String(100), nullable=False)
-    category = Column(String(100), nullable=False)
+    category = Column(String(100))
     macros = Column(JSON, nullable=False)
     steps = Column(JSON, nullable=False)
 
@@ -47,3 +47,23 @@ class Ingredient(Base):
 
     recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=False)
     recipe = relationship("Recipe", back_populates="ingredients")
+
+
+class Meals(Base):
+    __tablename__ = "meals"
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    title = Column(String(100), nullable=False)
+    calories = Column(Integer, nullable=False)
+    carbs = Column(String(100))
+    protein = Column(String(100))
+    fat = Column(String(100))
+    fiber = Column(String(100))
+    vitamin_d = Column(String(100))
+    vitamin_a = Column(String(100))
+    vitamin_c = Column(String(100))
+    iron = Column(String(100))
+    calcium = Column(String(100))
+    magnesium = Column(String(100))
+    potassium = Column(String(100))
+    zinc = Column(String(100))
+    ingredients = Column(JSON)
