@@ -2,13 +2,12 @@ import { RecipeCard } from "@/components/RecipeCard";
 import { Recipe } from "@/context/AppContext";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
+import { Image, ImageSource } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
 	ActivityIndicator,
-	Image,
-	ImageSourcePropType,
 	ScrollView,
 	StyleSheet,
 	Text,
@@ -19,7 +18,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
-const CATEGORY_IMAGES: Record<string, ImageSourcePropType> = {
+const CATEGORY_IMAGES: Record<string, ImageSource> = {
 	pizza: require("@/assets/images/cat_pizza.png"),
 	pasta: require("@/assets/images/pasta_cat.png"),
 	salad: require("@/assets/images/salad_cat.png"),
@@ -107,7 +106,12 @@ const RecipeList = () => {
 							end={{ x: 1, y: 1 }}
 							style={styles.categoryCard}
 						>
-							<Image source={category.image} style={styles.categoryImage} />
+							<Image
+								source={category.image}
+								style={styles.categoryImage}
+								contentFit="contain"
+								cachePolicy="memory-disk"
+							/>
 							<Text style={styles.categoryText}>{category.name}</Text>
 						</LinearGradient>
 					</TouchableOpacity>

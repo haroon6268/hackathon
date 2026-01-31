@@ -67,6 +67,13 @@ export default function MealsHistory() {
 
 	const totalCalories = meals.reduce((sum, meal) => sum + meal.calories, 0);
 
+	const openMeal = (meal: Meal) => {
+		router.push({
+			pathname: "/meal-tracked",
+			params: { meal: JSON.stringify(meal), fromHistory: "true" },
+		});
+	};
+
 	return (
 		<SafeAreaView style={styles.container}>
 			<View style={styles.header}>
@@ -113,10 +120,18 @@ export default function MealsHistory() {
 				) : (
 					<View style={styles.mealsList}>
 						{meals.map((meal) => (
-							<View key={meal.id} style={styles.mealCard}>
+							<TouchableOpacity
+								key={meal.id}
+								style={styles.mealCard}
+								onPress={() => openMeal(meal)}
+								activeOpacity={0.7}
+							>
 								<View style={styles.mealHeader}>
 									<Text style={styles.mealTitle}>{meal.title}</Text>
-									<Text style={styles.mealCalories}>{meal.calories} kcal</Text>
+									<View style={styles.mealHeaderRight}>
+										<Text style={styles.mealCalories}>{meal.calories} kcal</Text>
+										<Ionicons name="chevron-forward" size={16} color="#ccc" />
+									</View>
 								</View>
 								<View style={styles.mealMacros}>
 									<View style={styles.macroItem}>
@@ -146,7 +161,7 @@ export default function MealsHistory() {
 										)}
 									</View>
 								)}
-							</View>
+							</TouchableOpacity>
 						))}
 					</View>
 				)}
@@ -237,6 +252,11 @@ const styles = StyleSheet.create({
 		fontWeight: "600",
 		color: "#333",
 		flex: 1,
+	},
+	mealHeaderRight: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: 4,
 	},
 	mealCalories: {
 		fontSize: 16,

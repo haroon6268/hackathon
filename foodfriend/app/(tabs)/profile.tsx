@@ -15,6 +15,7 @@ import {
 	TouchableOpacity,
 	View,
 } from "react-native";
+import { PieChart } from "react-native-chart-kit";
 
 const PRIMARY = "#E9724C";
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
@@ -94,6 +95,13 @@ export default function Profile() {
 		router.push(`/saved/${recipe.id}`);
 	};
 
+	const openMeal = (meal: Meal) => {
+		router.push({
+			pathname: "/meal-tracked",
+			params: { meal: JSON.stringify(meal), fromHistory: "true" },
+		});
+	};
+
 	const getColors = (cat: string): [string, string] => {
 		return CATEGORY_COLORS[cat] || CATEGORY_COLORS.other;
 	};
@@ -104,6 +112,33 @@ export default function Profile() {
 		}
 		return "";
 	};
+
+	const parseGrams = (val: string) =>
+		parseFloat(val.replace(/[^0-9.]/g, "")) || 0;
+
+	const getMealPieData = (meal: Meal) => [
+		{
+			name: "P",
+			grams: parseGrams(meal.protein),
+			color: "#4ECDC4",
+			legendFontColor: "#333",
+			legendFontSize: 12,
+		},
+		{
+			name: "C",
+			grams: parseGrams(meal.carbs),
+			color: "#FFE66D",
+			legendFontColor: "#333",
+			legendFontSize: 12,
+		},
+		{
+			name: "F",
+			grams: parseGrams(meal.fat),
+			color: "#95E1D3",
+			legendFontColor: "#333",
+			legendFontSize: 12,
+		},
+	];
 
 	return (
 		<SafeAreaView style={styles.container}>
@@ -138,6 +173,26 @@ export default function Profile() {
 							<Text style={styles.viewMoreText}>View more</Text>
 						</TouchableOpacity>
 					</View>
+					<View style={styles.macroLegend}>
+						<View style={styles.legendItem}>
+							<View
+								style={[styles.legendDot, { backgroundColor: "#4ECDC4" }]}
+							/>
+							<Text style={styles.legendText}>Protein</Text>
+						</View>
+						<View style={styles.legendItem}>
+							<View
+								style={[styles.legendDot, { backgroundColor: "#FFE66D" }]}
+							/>
+							<Text style={styles.legendText}>Carbs</Text>
+						</View>
+						<View style={styles.legendItem}>
+							<View
+								style={[styles.legendDot, { backgroundColor: "#95E1D3" }]}
+							/>
+							<Text style={styles.legendText}>Fat</Text>
+						</View>
+					</View>
 					{mealsLoading ? (
 						<ActivityIndicator
 							size="small"
@@ -150,21 +205,38 @@ export default function Profile() {
 							<Text style={styles.emptyText}>No meals tracked yet</Text>
 						</View>
 					) : (
-						<View style={styles.mealsGrid}>
+						<View style={styles.mealsList}>
 							{meals.map((meal) => (
-								<View key={meal.id} style={styles.mealCard}>
-									<Text style={styles.mealTitle} numberOfLines={1}>
-										{meal.title}
-									</Text>
-									<Text style={styles.mealCalories}>{meal.calories} kcal</Text>
-									<View style={styles.mealMacros}>
-										<Text style={styles.mealMacroText}>{meal.protein} P</Text>
-										<Text style={styles.mealMacroDot}>•</Text>
-										<Text style={styles.mealMacroText}>{meal.carbs} C</Text>
-										<Text style={styles.mealMacroDot}>•</Text>
-										<Text style={styles.mealMacroText}>{meal.fat} F</Text>
+								<TouchableOpacity
+									key={meal.id}
+									style={styles.mealCard}
+									onPress={() => openMeal(meal)}
+									activeOpacity={0.7}
+								>
+									<View style={styles.mealInfo}>
+										<Text style={styles.mealTitle} numberOfLines={2}>
+											{meal.title}
+										</Text>
+										<Text style={styles.mealCalories}>
+											{meal.calories} kcal
+										</Text>
 									</View>
-								</View>
+									<View style={styles.mealChartContainer}>
+										<PieChart
+											data={getMealPieData(meal)}
+											width={80}
+											height={80}
+											chartConfig={{
+												color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+											}}
+											accessor="grams"
+											backgroundColor="transparent"
+											paddingLeft="20"
+											hasLegend={false}
+											absolute
+										/>
+									</View>
+								</TouchableOpacity>
 							))}
 						</View>
 					)}
@@ -373,42 +445,60 @@ const styles = StyleSheet.create({
 		fontSize: 11,
 		color: "#ccc",
 	},
-	mealsGrid: {
-		flexDirection: "row",
-		flexWrap: "wrap",
-		gap: 10,
+	mealsList: {
+		gap: 12,
 	},
 	mealCard: {
-		width: (width - 52) / 2,
-		backgroundColor: "#f9f9f9",
-		borderRadius: 12,
-		padding: 12,
-		borderLeftWidth: 3,
-		borderLeftColor: "#4CAF50",
+		flexDirection: "row",
+		alignItems: "center",
+		backgroundColor: "#fff",
+		borderRadius: 16,
+		padding: 16,
+		shadowColor: "#000",
+		shadowOffset: { width: 0, height: 2 },
+		shadowOpacity: 0.1,
+		shadowRadius: 4,
+		elevation: 3,
+	},
+	mealInfo: {
+		flex: 1,
 	},
 	mealTitle: {
-		fontSize: 13,
+		fontSize: 16,
 		fontWeight: "600",
 		color: "#333",
 		marginBottom: 4,
 	},
 	mealCalories: {
-		fontSize: 16,
+		fontSize: 14,
 		fontWeight: "bold",
 		color: "#4CAF50",
-		marginBottom: 6,
 	},
-	mealMacros: {
+	mealChartContainer: {
+		width: 80,
+		height: 80,
+		alignItems: "center",
+		justifyContent: "center",
+	},
+	legendItem: {
 		flexDirection: "row",
 		alignItems: "center",
+		gap: 6,
 	},
-	mealMacroText: {
-		fontSize: 11,
-		color: "#666",
+	legendDot: {
+		width: 12,
+		height: 12,
+		borderRadius: 6,
 	},
-	mealMacroDot: {
-		fontSize: 11,
-		color: "#ccc",
-		marginHorizontal: 4,
+	legendText: {
+		fontSize: 13,
+		color: "#333",
+		fontWeight: "500",
+	},
+	macroLegend: {
+		flexDirection: "row",
+		justifyContent: "space-around",
+		marginTop: 8,
+		marginBottom: 16,
 	},
 });
