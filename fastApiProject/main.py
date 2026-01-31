@@ -100,6 +100,65 @@ async def root(file: UploadFile = File(...)):
     return recipe
 
 
+@app.post("/track_meal")
+async def log_meal(file: UploadFile = File(...)):
+    contents = await file.read()
+    base64_image = base64.b64encode(contents).decode("utf-8")
+    response = await client.responses.create(
+        model="gpt-4.1",
+        input=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "input_text",
+                        "text": (
+                            "Identify the meal in this image "
+                            "and predict the macros / micros within the meal\n\n"
+                            "Return ONLY valid JSON in this exact format. "
+                            "{\n"
+                            '  "title": "string",\n'
+                            '  "ingredients": [\n'
+                            '    { "name": "string", "quantity": 0, "unit": "string" }\n'
+                            "  ],\n"
+                            '  "calories": 0,\n'
+                            '  "ingredients": ["string"],\n'
+                            '  "category": "string"\n'
+                            "}"
+                        ),
+                    },
+                    {
+                        "type": "input_image",
+                        "image_url": f"data:image/jpeg;base64,{base64_image}",
+                    },
+                ],
+            }
+        ],
+    )
+
+    raw = response.output[0].content[0].text
+
+    clean = raw.strip()
+
+    if clean.startswith("```"):
+        clean = clean.strip("`")
+        clean = clean.replace("json", "", 1).strip()
+
+    first_brace = clean.find("{")
+    if first_brace > 0:
+        clean = clean[first_brace:]
+
+    last_brace = clean.rfind("}")
+    if last_brace > 0:
+        clean = clean[: last_brace + 1]
+
+    data = json.loads(clean)
+
+    recipe = Recipe(**data)
+
+    return recipe
+
+
 @app.get("/hello/{name}")
 async def say_hello(name: str):
     return {"message": f"Hello {name}"}
@@ -140,14 +199,17 @@ async def get_recipe_by_id(id: int, db: Annotated[Session, Depends(get_db)]):
 
 @app.get("/global_recipe")
 async def get_all_recipe(
-    category: str, db: Annotated[Session, Depends(get_db)], limit=20
+    db: Annotated[Session, Depends(get_db)], limit=20, category: str = None
 ):
-    allRecipes = (
-        db.query(model.Recipe)
-        .filter(model.Recipe.category == category)
-        .limit(limit)
-        .all()
-    )
+    if category is None:
+        allRecipes = db.query(model.Recipe).limit(limit).all()
+    else:
+        allRecipes = (
+            db.query(model.Recipe)
+            .filter(model.Recipe.category == category)
+            .limit(limit)
+            .all()
+        )
     return allRecipes
 
 
