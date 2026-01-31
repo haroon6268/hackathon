@@ -178,18 +178,30 @@ async def log_meal(
 
 @app.get("/meals/day")
 async def meal_day(
-    date: datetime, user_id: str, db: Annotated[Session, Depends(get_db)]
+    user_id: str,
+    db: Annotated[Session, Depends(get_db)],
+    date: datetime = None,
+    limit=10,
 ):
-    start = datetime(date.year, date.month, date.day)
-    end = start + timedelta(days=1)
+    if date is None:
+        meals_in_day = (
+            db.query(model.Meals)
+            .filter(model.Meals.user_id == user_id)
+            .limit(limit)
+            .all()
+        )
+    else:
+        start = datetime(date.year, date.month, date.day)
+        end = start + timedelta(days=1)
 
-    meals_in_day = (
-        db.query(model.Meals)
-        .filter(model.Meals.date >= start)
-        .filter(model.Meals.date < end)
-        .filter(model.Meals.user_id == user_id)
-        .all()
-    )
+        meals_in_day = (
+            db.query(model.Meals)
+            .filter(model.Meals.date >= start)
+            .filter(model.Meals.date < end)
+            .filter(model.Meals.user_id == user_id)
+            .limit(limit)
+            .all()
+        )
 
     return meals_in_day
 
