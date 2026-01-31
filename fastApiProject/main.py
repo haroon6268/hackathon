@@ -55,14 +55,16 @@ async def root(file: UploadFile = File(...)):
                         "text": (
                             "List the ingredients visible in this image, then create a recipe "
                             "using ONLY those ingredients.\n\n"
-                            "Return ONLY valid JSON in this format:\n"
+                            "Return ONLY valid JSON in this exact format. "
+                            "The category must be one of: pizza, pasta, salad, burger, sushi, tacos, other.\n"
                             "{\n"
-                            '  "title": "...",\n'
+                            '  "title": "string",\n'
                             '  "ingredients": [\n'
-                            '    { "name": "string", "quantity": "float", "unit": "string",}\n'
+                            '    { "name": "string", "quantity": 0, "unit": "string" }\n'
                             "  ],\n"
-                            '  "macros": {"protein": 0, "fat": 0, "carbs": 0},\n'
-                            '  "steps": ["..."]\n'
+                            '  "macros": { "protein": 0, "fat": 0, "carbs": 0 },\n'
+                            '  "steps": ["string"],\n'
+                            '  "category": "string"\n'
                             "}"
                         ),
                     },
@@ -122,9 +124,22 @@ async def save_recipe(
     db.refresh(db_recipe)
 
 
-@app.get("/recipe")
-async def get_all_recipe(user_id: str, db: Annotated[Session, Depends(get_db)]):
+@app.get("/user_recipe")
+async def get_user_recipe(user_id: str, db: Annotated[Session, Depends(get_db)]):
     allRecipes = db.query(model.Recipe).filter(model.Recipe.user_id == user_id).all()
+    return allRecipes
+
+
+@app.get("/global_recipe")
+async def get_all_recipe(
+    category: str, db: Annotated[Session, Depends(get_db)], limit=20
+):
+    allRecipes = (
+        db.query(model.Recipe)
+        .filter(model.Recipe.category == category)
+        .limit(limit)
+        .all()
+    )
     return allRecipes
 
 

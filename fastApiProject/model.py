@@ -22,6 +22,7 @@ class Recipe(Base):
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     title = Column(String(100), nullable=False)
+    category = Column(String(100), nullable=False)
     macros = Column(JSON, nullable=False)
     steps = Column(JSON, nullable=False)
 

@@ -14,3 +14,4 @@ class Recipe(BaseModel):
     ingredients: List[Ingredients]
     macros: Dict[str, float]
     steps: List[str]
+    category: str
