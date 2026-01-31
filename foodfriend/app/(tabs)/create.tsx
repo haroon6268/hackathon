@@ -1,4 +1,5 @@
 import { Recipe, useAppContext } from "@/context/AppContext";
+import { useUser } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as ImageManipulator from "expo-image-manipulator";
@@ -16,14 +17,18 @@ import {
 const PRIMARY = "#E9724C";
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
+type Mode = "recipe" | "track";
+
 export default function Create() {
 	const { setImageUri, setRecipes } = useAppContext();
+	const { user } = useUser();
 	const [loading, setLoading] = useState(false);
 	const [facing, setFacing] = useState<"front" | "back">("back");
+	const [mode, setMode] = useState<Mode>("recipe");
 	const [permission, requestPermission] = useCameraPermissions();
 	const cameraRef = useRef<CameraView>(null);
 
-	const uploadImage = async (uri: string) => {
+	const uploadImageForRecipe = async (uri: string) => {
 		const converted = await ImageManipulator.manipulateAsync(uri, [], {
 			compress: 0.8,
 			format: ImageManipulator.SaveFormat.JPEG,
@@ -51,12 +56,40 @@ export default function Create() {
 		return response.json();
 	};
 
-	const handleImageSelected = async (uri: string) => {
+	const uploadImageForTracking = async (uri: string) => {
+		const converted = await ImageManipulator.manipulateAsync(uri, [], {
+			compress: 0.8,
+			format: ImageManipulator.SaveFormat.JPEG,
+		});
+
+		const formData = new FormData();
+		formData.append("file", {
+			uri: converted.uri,
+			name: "photo.jpg",
+			type: "image/jpeg",
+		} as any);
+
+		const response = await fetch(`${API_URL}/track_meal?user_id=${user?.id}`, {
+			method: "POST",
+			body: formData,
+			headers: {
+				"Content-Type": "multipart/form-data",
+			},
+		});
+
+		if (!response.ok) {
+			throw new Error("Failed to track meal");
+		}
+
+		return response.json();
+	};
+
+	const handleRecipeMode = async (uri: string) => {
 		setImageUri(uri);
 		setLoading(true);
 
 		try {
-			const data = await uploadImage(uri);
+			const data = await uploadImageForRecipe(uri);
 
 			const recipe: Recipe = {
 				id: 1,
@@ -77,6 +110,31 @@ export default function Create() {
 			alert("Failed to analyze image. Please try again.");
 		} finally {
 			setLoading(false);
+		}
+	};
+
+	const handleTrackMode = async (uri: string) => {
+		setLoading(true);
+
+		try {
+			const data = await uploadImageForTracking(uri);
+			router.push({
+				pathname: "/meal-tracked",
+				params: { meal: JSON.stringify(data) },
+			});
+		} catch (error) {
+			console.error("Error tracking meal:", error);
+			alert("Failed to track meal. Please try again.");
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handleImageSelected = async (uri: string) => {
+		if (mode === "recipe") {
+			await handleRecipeMode(uri);
+		} else {
+			await handleTrackMode(uri);
 		}
 	};
 
@@ -129,7 +187,9 @@ export default function Create() {
 		return (
 			<View style={styles.loadingContainer}>
 				<ActivityIndicator size="large" color={PRIMARY} />
-				<Text style={styles.loadingText}>Analyzing your ingredients...</Text>
+				<Text style={styles.loadingText}>
+					{mode === "recipe" ? "Analyzing your ingredients..." : "Tracking your meal..."}
+				</Text>
 			</View>
 		);
 	}
@@ -137,8 +197,41 @@ export default function Create() {
 	return (
 		<View style={styles.container}>
 			<CameraView ref={cameraRef} style={styles.camera} facing={facing}>
+				<View style={styles.modeToggleContainer}>
+					<View style={styles.modeToggle}>
+						<TouchableOpacity
+							style={[styles.modeButton, mode === "recipe" && styles.modeButtonActive]}
+							onPress={() => setMode("recipe")}
+						>
+							<Ionicons
+								name="restaurant-outline"
+								size={18}
+								color={mode === "recipe" ? "#fff" : "rgba(255,255,255,0.6)"}
+							/>
+							<Text style={[styles.modeText, mode === "recipe" && styles.modeTextActive]}>
+								Recipe
+							</Text>
+						</TouchableOpacity>
+						<TouchableOpacity
+							style={[styles.modeButton, mode === "track" && styles.modeButtonActive]}
+							onPress={() => setMode("track")}
+						>
+							<Ionicons
+								name="nutrition-outline"
+								size={18}
+								color={mode === "track" ? "#fff" : "rgba(255,255,255,0.6)"}
+							/>
+							<Text style={[styles.modeText, mode === "track" && styles.modeTextActive]}>
+								Track
+							</Text>
+						</TouchableOpacity>
+					</View>
+				</View>
+
 				<View style={styles.overlay}>
-					<Text style={styles.hint}>Snap your ingredients</Text>
+					<Text style={styles.hint}>
+						{mode === "recipe" ? "Snap your ingredients" : "Snap your meal"}
+					</Text>
 				</View>
 
 				<View style={styles.controls}>
@@ -147,7 +240,7 @@ export default function Create() {
 					</TouchableOpacity>
 
 					<TouchableOpacity style={styles.captureButton} onPress={takePhoto}>
-						<View style={styles.captureInner} />
+						<View style={[styles.captureInner, mode === "track" && styles.captureInnerTrack]} />
 					</TouchableOpacity>
 
 					<TouchableOpacity style={styles.sideButton} onPress={toggleFacing}>
@@ -167,9 +260,41 @@ const styles = StyleSheet.create({
 	camera: {
 		flex: 1,
 	},
-	overlay: {
+	modeToggleContainer: {
 		position: "absolute",
 		top: 60,
+		left: 0,
+		right: 0,
+		alignItems: "center",
+	},
+	modeToggle: {
+		flexDirection: "row",
+		backgroundColor: "rgba(0,0,0,0.4)",
+		borderRadius: 25,
+		padding: 4,
+	},
+	modeButton: {
+		flexDirection: "row",
+		alignItems: "center",
+		paddingVertical: 8,
+		paddingHorizontal: 16,
+		borderRadius: 20,
+		gap: 6,
+	},
+	modeButtonActive: {
+		backgroundColor: PRIMARY,
+	},
+	modeText: {
+		color: "rgba(255,255,255,0.6)",
+		fontSize: 14,
+		fontWeight: "500",
+	},
+	modeTextActive: {
+		color: "#fff",
+	},
+	overlay: {
+		position: "absolute",
+		top: 120,
 		left: 0,
 		right: 0,
 		alignItems: "center",
@@ -207,6 +332,9 @@ const styles = StyleSheet.create({
 		height: 64,
 		borderRadius: 32,
 		backgroundColor: "#fff",
+	},
+	captureInnerTrack: {
+		backgroundColor: "#4CAF50",
 	},
 	sideButton: {
 		width: 50,

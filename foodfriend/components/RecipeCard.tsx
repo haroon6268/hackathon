@@ -22,9 +22,9 @@ export function RecipeCard({ recipe, onPress }: RecipeCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    width: 200,
-    height: 320,
-    borderRadius: 20,
+    width: 160,
+    height: 240,
+    borderRadius: 16,
     backgroundColor: "#fff",
     overflow: "hidden",
     elevation: 4,
@@ -35,22 +35,22 @@ const styles = StyleSheet.create({
   },
   image: {
     width: "100%",
-    height: 240,
+    height: 175,
     resizeMode: "cover",
   },
   textContainer: {
-    padding: 14,
+    padding: 12,
     flex: 1,
     justifyContent: "center",
   },
   recipeName: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "600",
     color: "#333",
   },
   timeText: {
-    fontSize: 14,
+    fontSize: 12,
     color: "#666",
-    marginTop: 4,
+    marginTop: 3,
   },
 });

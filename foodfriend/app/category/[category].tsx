@@ -1,12 +1,11 @@
 import { Recipe } from "@/context/AppContext";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
 	ActivityIndicator,
 	Dimensions,
-	Image,
-	ImageSourcePropType,
 	SafeAreaView,
 	ScrollView,
 	StyleSheet,
@@ -21,14 +20,14 @@ const CARD_WIDTH = (width - 48) / 2;
 const PRIMARY = "#E9724C";
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
-const CATEGORY_IMAGES: Record<string, ImageSourcePropType> = {
-	pizza: require("@/assets/images/cat_pizza.png"),
-	pasta: require("@/assets/images/pasta_cat.png"),
-	salad: require("@/assets/images/salad_cat.png"),
-	burger: require("@/assets/images/burger_cat.png"),
-	sushi: require("@/assets/images/sushi_cat.png"),
-	tacos: require("@/assets/images/tacos_cat.png"),
-	other: require("@/assets/images/other_cat.png"),
+const CATEGORY_COLORS: Record<string, [string, string]> = {
+	pizza: ["#FF6B6B", "#EE5A5A"],
+	pasta: ["#FFB347", "#FFA726"],
+	salad: ["#66BB6A", "#4CAF50"],
+	burger: ["#8D6E63", "#6D4C41"],
+	sushi: ["#42A5F5", "#1E88E5"],
+	tacos: ["#FFCA28", "#FFB300"],
+	other: ["#AB47BC", "#8E24AA"],
 };
 
 export default function CategoryPage() {
@@ -55,7 +54,6 @@ export default function CategoryPage() {
 					instructions: item.steps,
 					category: item.category,
 					macros: item.macros,
-					image: CATEGORY_IMAGES[item.category] || CATEGORY_IMAGES.other,
 				}));
 				setRecipes(mappedRecipes);
 			}
@@ -75,6 +73,10 @@ export default function CategoryPage() {
 	const categoryTitle = category
 		? category.charAt(0).toUpperCase() + category.slice(1)
 		: "";
+
+	const getColors = (cat: string): [string, string] => {
+		return CATEGORY_COLORS[cat] || CATEGORY_COLORS.other;
+	};
 
 	return (
 		<SafeAreaView style={styles.container}>
@@ -106,17 +108,29 @@ export default function CategoryPage() {
 								style={styles.recipeCard}
 								onPress={() => router.push(`/saved/${recipe.id}`)}
 							>
-								<Image
-									source={recipe.image as ImageSourcePropType}
-									style={styles.recipeImage}
-								/>
+								<LinearGradient
+									colors={getColors(recipe.category)}
+									start={{ x: 0, y: 0 }}
+									end={{ x: 1, y: 1 }}
+									style={styles.colorHeader}
+								>
+									<Ionicons name="restaurant" size={32} color="rgba(255,255,255,0.3)" />
+								</LinearGradient>
 								<View style={styles.recipeInfo}>
 									<Text style={styles.recipeTitle} numberOfLines={2}>
 										{recipe.name}
 									</Text>
-									<Text style={styles.recipeMeta}>
-										{recipe.ingredients.length} ingredients
+									<Text style={styles.recipeDescription} numberOfLines={1}>
+										{recipe.description}
 									</Text>
+									<View style={styles.recipeMeta}>
+										<Ionicons name="time-outline" size={12} color="#999" />
+										<Text style={styles.recipeMetaText}>{recipe.time}</Text>
+										<Text style={styles.recipeMetaDot}>•</Text>
+										<Text style={styles.recipeMetaText}>
+											{recipe.ingredients.length} items
+										</Text>
+									</View>
 								</View>
 							</TouchableOpacity>
 						))}
@@ -173,7 +187,7 @@ const styles = StyleSheet.create({
 	grid: {
 		flexDirection: "row",
 		flexWrap: "wrap",
-		gap: 16,
+		gap: 12,
 	},
 	recipeCard: {
 		width: CARD_WIDTH,
@@ -186,10 +200,10 @@ const styles = StyleSheet.create({
 		shadowRadius: 4,
 		elevation: 3,
 	},
-	recipeImage: {
-		width: "100%",
-		height: CARD_WIDTH,
-		resizeMode: "cover",
+	colorHeader: {
+		height: 80,
+		alignItems: "center",
+		justifyContent: "center",
 	},
 	recipeInfo: {
 		padding: 12,
@@ -200,8 +214,22 @@ const styles = StyleSheet.create({
 		color: "#333",
 		marginBottom: 4,
 	},
+	recipeDescription: {
+		fontSize: 11,
+		color: "#666",
+		marginBottom: 8,
+	},
 	recipeMeta: {
-		fontSize: 12,
+		flexDirection: "row",
+		alignItems: "center",
+		gap: 4,
+	},
+	recipeMetaText: {
+		fontSize: 11,
 		color: "#999",
+	},
+	recipeMetaDot: {
+		fontSize: 11,
+		color: "#ccc",
 	},
 });
