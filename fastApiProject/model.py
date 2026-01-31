@@ -93,6 +93,6 @@ class Analysis(Base):
     __tablename__ = "analysis"
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     date = Column(DateTime(timezone=True))
-    analyze = Column(Text)
+    analyze = Column(JSON)
     user_id = Column(String(100), ForeignKey("users.id"), nullable=False)
     user = relationship("User", back_populates="analysis")
