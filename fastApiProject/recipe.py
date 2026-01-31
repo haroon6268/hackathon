@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 from typing import List, Dict
 from typing import Optional
@@ -35,3 +35,4 @@ class Meals(BaseModel):
     potassium: str
     zinc: str
     ingredients: List[str]
+    model_config = ConfigDict(from_attributes=True)

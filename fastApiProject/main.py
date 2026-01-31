@@ -2,7 +2,7 @@ import base64
 import os
 from dotenv import load_dotenv
 from fastapi import FastAPI, UploadFile, File, Request, Depends
-from recipe import Recipe
+from recipe import Recipe, Meals
 from database import engine
 import model
 from sqlalchemy import inspect
@@ -204,6 +204,72 @@ async def meal_day(
         )
 
     return meals_in_day
+
+
+@app.get("/meals/analysis")
+async def meal_day(
+    user_id: str,
+    db: Annotated[Session, Depends(get_db)],
+):
+    query = db.query(model.Meals).filter(model.Meals.user_id == user_id)
+
+    total = query.count()
+    meals = query.limit(5).all()
+
+    if total < 3:
+        return {"Text": "Log more meals to get analysis"}
+    else:
+        two_days_ago = datetime.utcnow() - timedelta(days=2)
+
+        analysis_query = (
+            db.query(model.Analysis)
+            .filter(model.Analysis.user_id == user_id)
+            .filter(model.Analysis.date >= two_days_ago)
+            .first()
+        )
+        if analysis_query:
+            return analysis_query.analyze
+        else:
+            meals = (
+                db.query(model.Meals)
+                .filter(model.Meals.user_id == user_id)
+                .order_by(model.Meals.date.desc())
+                .limit(5)
+                .all()
+            )
+            meal_dicts = [Meals.from_orm(m).model_dump(exclude={"date"}) for m in meals]
+
+            response = await client.responses.create(
+                model="gpt-4.1",
+                input=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "input_text",
+                                "text": (
+                                    "Analyze the following 5 meals. "
+                                    "Give a overall healthiness score (0–100) for the combined meals and a short explanation.\n\n"
+                                    f"{json.dumps(meal_dicts)}\n\n"
+                                    "Return plain text only. Do NOT return JSON."
+                                ),
+                            }
+                        ],
+                    }
+                ],
+            )
+            raw = response.output[0].content[0].text
+            clean = raw.strip()
+
+            db_analysis = model.Analysis()
+            db_analysis.date = datetime.now()
+            db_analysis.analyze = clean
+            db_analysis.user_id = user_id
+            db.add(db_analysis)
+            db.commit()
+            db.refresh(db_analysis)
+
+            return db_analysis.analyze
 
 
 @app.get("/hello/{name}")

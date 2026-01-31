@@ -8,6 +8,7 @@ from sqlalchemy import (
     Date,
     JSON,
     DateTime,
+    Text,
 )
 from sqlalchemy.orm import relationship
 from database import Base
@@ -27,6 +28,9 @@ class User(Base):
     )
     meals = relationship(
         "Meals", back_populates="user", cascade="all, delete-orphan", lazy="selectin"
+    )
+    analysis = relationship(
+        "Analysis", back_populates="user", cascade="all, delete-orphan", lazy="selectin"
     )
 
 
@@ -83,3 +87,12 @@ class Meals(Base):
     ingredients = Column(JSON)
     user_id = Column(String(100), ForeignKey("users.id"), nullable=False)
     user = relationship("User", back_populates="meals")
+
+
+class Analysis(Base):
+    __tablename__ = "analysis"
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    date = Column(DateTime(timezone=True))
+    analyze = Column(Text)
+    user_id = Column(String(100), ForeignKey("users.id"), nullable=False)
+    user = relationship("User", back_populates="analysis")
