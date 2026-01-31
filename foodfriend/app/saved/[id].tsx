@@ -1,11 +1,8 @@
-import { useAppContext } from "@/context/AppContext";
-import { useUser } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
 	ActivityIndicator,
-	Alert,
 	SafeAreaView,
 	ScrollView,
 	StyleSheet,
@@ -17,55 +14,48 @@ import {
 const PRIMARY = "#E9724C";
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
-export default function RecipeDetail() {
-	const { index } = useLocalSearchParams<{ index: string }>();
-	const { recipes } = useAppContext();
-	const { user } = useUser();
-	const [saving, setSaving] = useState(false);
-	const [saved, setSaved] = useState(false);
+type SavedRecipe = {
+	id: number;
+	title: string;
+	ingredients: { name: string; quantity: number; unit: string }[];
+	macros: { protein?: number; carbs?: number; fat?: number };
+	steps: string[];
+};
 
-	const recipe = recipes[Number(index)];
+export default function SavedRecipeDetail() {
+	const { id } = useLocalSearchParams<{ id: string }>();
+	const [recipe, setRecipe] = useState<SavedRecipe | null>(null);
+	const [loading, setLoading] = useState(true);
 
-	const saveRecipe = async () => {
-		if (!recipe || !user) return;
+	useEffect(() => {
+		if (id) {
+			fetchRecipe(id);
+		}
+	}, [id]);
 
-		setSaving(true);
+	const fetchRecipe = async (recipeId: string) => {
 		try {
-			const body = {
-				title: recipe.name,
-				ingredients: recipe.ingredients,
-				macros: recipe.macros || {},
-				steps: recipe.instructions,
-				category: recipe.category || "other",
-				image: null,
-			};
-
-			const response = await fetch(
-				`${API_URL}/recipe/save?user_id=${user.id}`,
-				{
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify(body),
-				},
-			);
-
-			if (!response.ok) {
-				const errorData = await response.json();
-				console.error("Save error details:", errorData);
-				throw new Error("Failed to save recipe");
+			const response = await fetch(`${API_URL}/recipe/${recipeId}`);
+			if (response.ok) {
+				const data = await response.json();
+				setRecipe(data);
 			}
-
-			setSaved(true);
-			Alert.alert("Saved!", "Recipe has been saved to your collection.");
 		} catch (error) {
-			console.error("Error saving recipe:", error);
-			Alert.alert("Error", "Failed to save recipe. Please try again.");
+			console.error("Error fetching recipe:", error);
 		} finally {
-			setSaving(false);
+			setLoading(false);
 		}
 	};
+
+	if (loading) {
+		return (
+			<SafeAreaView style={styles.container}>
+				<View style={styles.loadingContainer}>
+					<ActivityIndicator size="large" color={PRIMARY} />
+				</View>
+			</SafeAreaView>
+		);
+	}
 
 	if (!recipe) {
 		return (
@@ -74,6 +64,10 @@ export default function RecipeDetail() {
 			</SafeAreaView>
 		);
 	}
+
+	const description = recipe.macros
+		? `${recipe.macros.protein || 0}g protein, ${recipe.macros.carbs || 0}g carbs, ${recipe.macros.fat || 0}g fat`
+		: "";
 
 	return (
 		<SafeAreaView style={styles.container}>
@@ -84,38 +78,23 @@ export default function RecipeDetail() {
 				>
 					<Ionicons name="arrow-back" size={24} color={PRIMARY} />
 				</TouchableOpacity>
-				<Text style={styles.headerTitle}>{recipe.name}</Text>
-				<TouchableOpacity
-					onPress={saveRecipe}
-					style={styles.saveButton}
-					disabled={saving || saved}
-				>
-					{saving ? (
-						<ActivityIndicator size="small" color={PRIMARY} />
-					) : (
-						<Ionicons
-							name={saved ? "bookmark" : "bookmark-outline"}
-							size={24}
-							color={PRIMARY}
-						/>
-					)}
-				</TouchableOpacity>
+				<Text style={styles.headerTitle}>{recipe.title}</Text>
 			</View>
 
 			<ScrollView
 				style={styles.scrollView}
 				contentContainerStyle={styles.scrollContent}
 			>
-				<Text style={styles.description}>{recipe.description}</Text>
+				<Text style={styles.description}>{description}</Text>
 
 				<View style={styles.metaRow}>
 					<View style={styles.metaItem}>
 						<Ionicons name="time-outline" size={20} color={PRIMARY} />
-						<Text style={styles.metaText}>{recipe.time}</Text>
+						<Text style={styles.metaText}>30 min</Text>
 					</View>
 					<View style={styles.metaItem}>
 						<Ionicons name="people-outline" size={20} color={PRIMARY} />
-						<Text style={styles.metaText}>{recipe.servings} servings</Text>
+						<Text style={styles.metaText}>1 serving</Text>
 					</View>
 				</View>
 
@@ -133,7 +112,7 @@ export default function RecipeDetail() {
 
 				<View style={styles.section}>
 					<Text style={styles.sectionTitle}>Instructions</Text>
-					{recipe.instructions.map((step, i) => (
+					{recipe.steps.map((step, i) => (
 						<View key={i} style={styles.stepRow}>
 							<View style={styles.stepNumber}>
 								<Text style={styles.stepNumberText}>{i + 1}</Text>
@@ -152,6 +131,11 @@ const styles = StyleSheet.create({
 		flex: 1,
 		backgroundColor: "#fff",
 	},
+	loadingContainer: {
+		flex: 1,
+		alignItems: "center",
+		justifyContent: "center",
+	},
 	header: {
 		flexDirection: "row",
 		alignItems: "center",
@@ -168,9 +152,6 @@ const styles = StyleSheet.create({
 		fontWeight: "bold",
 		color: "#333",
 		flex: 1,
-	},
-	saveButton: {
-		padding: 4,
 	},
 	scrollView: {
 		flex: 1,

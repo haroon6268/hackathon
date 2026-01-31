@@ -67,6 +67,7 @@ export default function Create() {
 				ingredients: data.ingredients,
 				instructions: data.steps,
 				macros: data.macros,
+				category: data.category || "other",
 			};
 
 			setRecipes([recipe]);

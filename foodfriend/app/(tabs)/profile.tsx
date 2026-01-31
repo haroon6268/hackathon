@@ -1,4 +1,3 @@
-import { useAppContext } from "@/context/AppContext";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
@@ -28,7 +27,6 @@ type SavedRecipe = {
 export default function Profile() {
 	const { user } = useUser();
 	const { signOut } = useAuth();
-	const { setRecipes } = useAppContext();
 	const [savedRecipes, setSavedRecipes] = useState<SavedRecipe[]>([]);
 	const [loading, setLoading] = useState(true);
 
@@ -36,7 +34,7 @@ export default function Profile() {
 		if (!user) return;
 
 		try {
-			const response = await fetch(`${API_URL}/recipe?user_id=${user.id}`);
+			const response = await fetch(`${API_URL}/user_recipe?user_id=${user.id}`);
 			if (response.ok) {
 				const data = await response.json();
 				setSavedRecipes(data);
@@ -51,25 +49,11 @@ export default function Profile() {
 	useFocusEffect(
 		useCallback(() => {
 			fetchSavedRecipes();
-		}, [user])
+		}, [user]),
 	);
 
 	const openRecipe = (recipe: SavedRecipe) => {
-		setRecipes([
-			{
-				id: recipe.id,
-				name: recipe.title,
-				description: recipe.macros
-					? `${recipe.macros.protein || 0}g protein, ${recipe.macros.carbs || 0}g carbs, ${recipe.macros.fat || 0}g fat`
-					: "",
-				time: "30 min",
-				servings: 1,
-				ingredients: recipe.ingredients,
-				instructions: recipe.steps,
-				macros: recipe.macros,
-			},
-		]);
-		router.push({ pathname: "/recipe", params: { index: 0 } });
+		router.push(`/saved/${recipe.id}`);
 	};
 
 	return (
@@ -89,7 +73,10 @@ export default function Profile() {
 					<Text style={styles.email}>
 						{user?.primaryEmailAddress?.emailAddress}
 					</Text>
-					<TouchableOpacity style={styles.logoutButton} onPress={() => signOut()}>
+					<TouchableOpacity
+						style={styles.logoutButton}
+						onPress={() => signOut()}
+					>
 						<Ionicons name="log-out-outline" size={18} color="#666" />
 						<Text style={styles.logoutText}>Sign out</Text>
 					</TouchableOpacity>
@@ -98,7 +85,11 @@ export default function Profile() {
 				<View style={styles.section}>
 					<Text style={styles.sectionTitle}>Saved Recipes</Text>
 					{loading ? (
-						<ActivityIndicator size="large" color={PRIMARY} style={styles.loader} />
+						<ActivityIndicator
+							size="large"
+							color={PRIMARY}
+							style={styles.loader}
+						/>
 					) : savedRecipes.length === 0 ? (
 						<View style={styles.emptyState}>
 							<Ionicons name="bookmark-outline" size={48} color="#ccc" />
@@ -115,9 +106,6 @@ export default function Profile() {
 									style={styles.recipeCard}
 									onPress={() => openRecipe(recipe)}
 								>
-									<View style={styles.recipeIcon}>
-										<Ionicons name="restaurant" size={24} color="#fff" />
-									</View>
 									<View style={styles.recipeInfo}>
 										<Text style={styles.recipeTitle}>{recipe.title}</Text>
 										<Text style={styles.recipeMeta}>
@@ -221,20 +209,9 @@ const styles = StyleSheet.create({
 	recipeCard: {
 		flexDirection: "row",
 		alignItems: "center",
-		padding: 12,
-		backgroundColor: "#fff",
+		padding: 16,
+		backgroundColor: "#f9f9f9",
 		borderRadius: 12,
-		borderWidth: 1,
-		borderColor: "#eee",
-		gap: 12,
-	},
-	recipeIcon: {
-		width: 48,
-		height: 48,
-		borderRadius: 12,
-		backgroundColor: PRIMARY,
-		alignItems: "center",
-		justifyContent: "center",
 	},
 	recipeInfo: {
 		flex: 1,

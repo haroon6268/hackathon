@@ -49,6 +49,7 @@ const RecipeList = () => {
 				"Add soy sauce and toss to coat",
 			],
 			image: require("@/assets/images/veggie_stir_fry.jpg"),
+			category: "other",
 		},
 		{
 			id: 2,
@@ -72,6 +73,7 @@ const RecipeList = () => {
 				"Top with parmesan and fresh basil",
 			],
 			image: require("@/assets/images/pasta_primavera.jpg"),
+			category: "other",
 		},
 		{
 			id: 3,
@@ -95,6 +97,7 @@ const RecipeList = () => {
 				"Drizzle with olive oil and lemon juice",
 			],
 			image: require("@/assets/images/chicken_salad.jpg"),
+			category: "other",
 		},
 		{
 			id: 4,
@@ -118,12 +121,15 @@ const RecipeList = () => {
 				"Fold omelette and serve with chives",
 			],
 			image: require("@/assets/images/mushroom_omlette.jpg"),
+			category: "other",
 		},
 	];
 	return (
 		<SafeAreaView style={styles.container}>
 			<View style={styles.header}>
-				<Text style={styles.greeting}>Hello {user?.firstName || "Friend"}!</Text>
+				<Text style={styles.greeting}>
+					Hello {user?.firstName || "Friend"}!
+				</Text>
 				<TouchableOpacity onPress={() => signOut()}>
 					<Ionicons name="log-out-outline" size={24} color="#666" />
 				</TouchableOpacity>
