@@ -228,7 +228,7 @@ async def meal_day(
             .first()
         )
         if analysis_query:
-            return analysis_query.analyze
+            return analysis_query
         else:
             meals = (
                 db.query(model.Meals)
