@@ -41,11 +41,21 @@ const CATEGORIES = [
 	{ name: "Tacos", key: "tacos", image: require("@/assets/images/tacos.png") },
 ];
 
+type MealAnalysis = {
+	id: number;
+	explanation: string;
+	rating: number;
+	date: string;
+};
+
 const RecipeList = () => {
 	const { signOut } = useAuth();
 	const { user } = useUser();
 	const [recipes, setRecipes] = useState<Recipe[]>([]);
 	const [loading, setLoading] = useState(true);
+	const [analysis, setAnalysis] = useState<MealAnalysis | null>(null);
+	const [analysisExpanded, setAnalysisExpanded] = useState(false);
+	const [needsMoreMeals, setNeedsMoreMeals] = useState(false);
 
 	const fetchRecipes = async () => {
 		try {
@@ -75,9 +85,42 @@ const RecipeList = () => {
 		}
 	};
 
+	const fetchAnalysis = async () => {
+		if (!user) return;
+		try {
+			const response = await fetch(
+				`${API_URL}/meals/analysis?user_id=${user.id}`,
+			);
+			if (response.ok) {
+				const data = await response.json();
+				if (data.Text) {
+					setNeedsMoreMeals(true);
+					setAnalysis(null);
+				} else {
+					setNeedsMoreMeals(false);
+					setAnalysis(data);
+				}
+			}
+		} catch (error) {
+			console.error("Error fetching analysis:", error);
+		}
+	};
+
 	useEffect(() => {
 		fetchRecipes();
 	}, []);
+
+	useEffect(() => {
+		if (user) {
+			fetchAnalysis();
+		}
+	}, [user]);
+
+	const getScoreColor = (score: number) => {
+		if (score >= 70) return "#4CAF50";
+		if (score >= 50) return "#FF9800";
+		return "#F44336";
+	};
 
 	return (
 		<SafeAreaView style={styles.container}>
@@ -90,50 +133,112 @@ const RecipeList = () => {
 				</TouchableOpacity>
 			</View>
 			<ScrollView
-				horizontal
-				showsHorizontalScrollIndicator={false}
-				style={styles.categoryScroll}
-				contentContainerStyle={styles.categoryContainer}
+				style={styles.mainScroll}
+				contentContainerStyle={styles.mainScrollContent}
+				showsVerticalScrollIndicator={false}
 			>
-				{CATEGORIES.map((category) => (
-					<TouchableOpacity
-						key={category.key}
-						onPress={() => router.push(`/category/${category.key}`)}
-					>
-						<LinearGradient
-							colors={["#FFD166", "#F4A623"]}
-							start={{ x: 0, y: 0 }}
-							end={{ x: 1, y: 1 }}
-							style={styles.categoryCard}
-						>
-							<Image
-								source={category.image}
-								style={styles.categoryImage}
-								contentFit="contain"
-								cachePolicy="memory-disk"
-							/>
-							<Text style={styles.categoryText}>{category.name}</Text>
-						</LinearGradient>
-					</TouchableOpacity>
-				))}
-			</ScrollView>
-
-			{loading ? (
-				<View style={styles.loadingContainer}>
-					<ActivityIndicator size="large" color="#E9724C" />
-				</View>
-			) : (
 				<ScrollView
 					horizontal
 					showsHorizontalScrollIndicator={false}
-					style={styles.recipeScroll}
-					contentContainerStyle={styles.recipeContainer}
+					style={styles.categoryScroll}
+					contentContainerStyle={styles.categoryContainer}
 				>
-					{recipes.map((recipe) => (
-						<RecipeCard key={recipe.id} recipe={recipe} onPress={() => router.push(`/saved/${recipe.id}`)} />
+					{CATEGORIES.map((category) => (
+						<TouchableOpacity
+							key={category.key}
+							onPress={() => router.push(`/category/${category.key}`)}
+						>
+							<LinearGradient
+								colors={["#FFD166", "#F4A623"]}
+								start={{ x: 0, y: 0 }}
+								end={{ x: 1, y: 1 }}
+								style={styles.categoryCard}
+							>
+								<Image
+									source={category.image}
+									style={styles.categoryImage}
+									contentFit="contain"
+									cachePolicy="memory-disk"
+								/>
+								<Text style={styles.categoryText}>{category.name}</Text>
+							</LinearGradient>
+						</TouchableOpacity>
 					))}
 				</ScrollView>
-			)}
+
+				{loading ? (
+					<View style={styles.loadingContainer}>
+						<ActivityIndicator size="large" color="#E9724C" />
+					</View>
+				) : (
+					<ScrollView
+						horizontal
+						showsHorizontalScrollIndicator={false}
+						style={styles.recipeScroll}
+						contentContainerStyle={styles.recipeContainer}
+					>
+						{recipes.map((recipe) => (
+							<RecipeCard
+								key={recipe.id}
+								recipe={recipe}
+								onPress={() => router.push(`/saved/${recipe.id}`)}
+							/>
+						))}
+					</ScrollView>
+				)}
+
+				{needsMoreMeals && (
+					<View style={styles.analysisSection}>
+						<Text style={styles.analysisSectionTitle}>
+							Today's Health Score
+						</Text>
+						<View style={styles.needsMoreMealsCard}>
+							<Ionicons name="nutrition-outline" size={32} color="#999" />
+							<Text style={styles.needsMoreMealsText}>
+								Log more meals to get your health score analysis
+							</Text>
+						</View>
+					</View>
+				)}
+
+				{analysis && (
+					<View style={styles.analysisSection}>
+						<Text style={styles.analysisSectionTitle}>
+							Today's Health Score
+						</Text>
+						<TouchableOpacity
+							style={styles.analysisCard}
+							onPress={() => setAnalysisExpanded(!analysisExpanded)}
+							activeOpacity={0.7}
+						>
+							<View style={styles.analysisHeader}>
+								<View style={styles.scoreContainer}>
+									<Text
+										style={[
+											styles.scoreValue,
+											{ color: getScoreColor(analysis.rating) },
+										]}
+									>
+										{analysis.rating}
+									</Text>
+									<Text style={styles.scoreLabel}>/ 100</Text>
+								</View>
+								<Ionicons
+									name={analysisExpanded ? "chevron-up" : "chevron-down"}
+									size={20}
+									color="#999"
+								/>
+							</View>
+							<Text
+								style={styles.analysisExplanation}
+								numberOfLines={analysisExpanded ? undefined : 5}
+							>
+								{analysis.explanation}
+							</Text>
+						</TouchableOpacity>
+					</View>
+				)}
+			</ScrollView>
 		</SafeAreaView>
 	);
 };
@@ -142,7 +247,14 @@ export default RecipeList;
 
 const styles = StyleSheet.create({
 	container: {
+		flex: 1,
 		backgroundColor: "#fff",
+	},
+	mainScroll: {
+		flex: 1,
+	},
+	mainScrollContent: {
+		paddingBottom: 100,
 	},
 	header: {
 		flexDirection: "row",
@@ -202,5 +314,56 @@ const styles = StyleSheet.create({
 	recipeContainer: {
 		paddingHorizontal: 16,
 		gap: 12,
+	},
+	analysisSection: {
+		padding: 16,
+		paddingTop: 24,
+	},
+	analysisSectionTitle: {
+		fontSize: 18,
+		fontWeight: "bold",
+		color: "#333",
+		marginBottom: 12,
+	},
+	analysisCard: {
+		backgroundColor: "#f9f9f9",
+		borderRadius: 12,
+		padding: 14,
+	},
+	analysisHeader: {
+		flexDirection: "row",
+		justifyContent: "space-between",
+		alignItems: "center",
+		marginBottom: 8,
+	},
+	scoreContainer: {
+		flexDirection: "row",
+		alignItems: "baseline",
+	},
+	scoreValue: {
+		fontSize: 32,
+		fontWeight: "bold",
+	},
+	scoreLabel: {
+		fontSize: 14,
+		color: "#999",
+		marginLeft: 2,
+	},
+	analysisExplanation: {
+		fontSize: 13,
+		color: "#666",
+		lineHeight: 20,
+	},
+	needsMoreMealsCard: {
+		backgroundColor: "#f9f9f9",
+		borderRadius: 12,
+		padding: 20,
+		alignItems: "center",
+		gap: 10,
+	},
+	needsMoreMealsText: {
+		fontSize: 14,
+		color: "#666",
+		textAlign: "center",
 	},
 });
