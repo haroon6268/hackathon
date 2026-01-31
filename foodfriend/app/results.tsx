@@ -10,7 +10,6 @@ import {
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAppContext } from "@/context/AppContext";
-import { RecipeCard } from "@/components/RecipeCard";
 
 const PRIMARY = "#E9724C";
 
@@ -34,11 +33,26 @@ export default function Results() {
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {recipes.map((recipe, index) => (
-          <RecipeCard
+          <TouchableOpacity
             key={recipe.id}
-            recipe={recipe}
+            style={styles.listItem}
             onPress={() => router.push({ pathname: "/recipe", params: { index } })}
-          />
+          >
+            <View style={styles.listIcon}>
+              <Ionicons name="restaurant" size={24} color="#fff" />
+            </View>
+            <View style={styles.listContent}>
+              <Text style={styles.listTitle}>{recipe.name}</Text>
+              <Text style={styles.listSubtitle}>{recipe.description}</Text>
+              <View style={styles.listMeta}>
+                <Ionicons name="time-outline" size={14} color="#999" />
+                <Text style={styles.listMetaText}>{recipe.time}</Text>
+                <Text style={styles.listMetaText}>•</Text>
+                <Text style={styles.listMetaText}>{recipe.ingredients.length} ingredients</Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#ccc" />
+          </TouchableOpacity>
         ))}
       </ScrollView>
     </SafeAreaView>
@@ -84,5 +98,46 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 16,
     gap: 12,
+  },
+  listItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#eee",
+    gap: 12,
+  },
+  listIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: PRIMARY,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  listContent: {
+    flex: 1,
+  },
+  listTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 2,
+  },
+  listSubtitle: {
+    fontSize: 13,
+    color: "#666",
+    marginBottom: 4,
+  },
+  listMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  listMetaText: {
+    fontSize: 12,
+    color: "#999",
   },
 });

@@ -1,12 +1,18 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 
+export type Ingredient = {
+  name: string;
+  quantity: number;
+  unit: string;
+};
+
 export type Recipe = {
   id: number;
   name: string;
   description: string;
   time: string;
   servings: number;
-  ingredients: string[];
+  ingredients: Ingredient[];
   instructions: string[];
   image?: any;
 };

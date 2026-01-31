@@ -54,7 +54,9 @@ export default function RecipeDetail() {
           {recipe.ingredients.map((ingredient, i) => (
             <View key={i} style={styles.ingredientRow}>
               <View style={styles.bullet} />
-              <Text style={styles.ingredientText}>{ingredient}</Text>
+              <Text style={styles.ingredientText}>
+                {ingredient.quantity} {ingredient.unit} {ingredient.name}
+              </Text>
             </View>
           ))}
         </View>
