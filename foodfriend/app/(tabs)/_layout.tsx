@@ -1,5 +1,6 @@
 import { useAuth } from "@clerk/clerk-expo";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { Ionicons } from "@expo/vector-icons";
 import { Redirect, Tabs } from "expo-router";
 import { StyleSheet } from "react-native";
 
@@ -38,6 +39,15 @@ export default function TabLayout() {
 					),
 				}}
 			/>
+			<Tabs.Screen
+				name="profile"
+				options={{
+					title: "Profile",
+					tabBarIcon: ({ color }) => (
+						<Ionicons size={28} name="person" color={color} />
+					),
+				}}
+			/>
 		</Tabs>
 	);
 }
@@ -52,7 +62,7 @@ const styles = StyleSheet.create({
 		backgroundColor: "#fff",
 		borderRadius: 40,
 		bottom: 10,
-		marginHorizontal: 100,
+		marginHorizontal: 60,
 		borderTopWidth: 0,
 		elevation: 10,
 		shadowColor: "#000",

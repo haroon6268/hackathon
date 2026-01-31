@@ -66,6 +66,7 @@ export default function Create() {
 				servings: 1,
 				ingredients: data.ingredients,
 				instructions: data.steps,
+				macros: data.macros,
 			};
 
 			setRecipes([recipe]);
@@ -113,7 +114,10 @@ export default function Create() {
 				<Text style={styles.permissionText}>
 					Camera access is needed to snap your ingredients
 				</Text>
-				<TouchableOpacity style={styles.permissionButton} onPress={requestPermission}>
+				<TouchableOpacity
+					style={styles.permissionButton}
+					onPress={requestPermission}
+				>
 					<Text style={styles.permissionButtonText}>Enable Camera</Text>
 				</TouchableOpacity>
 			</View>

@@ -6,6 +6,13 @@ export type Ingredient = {
   unit: string;
 };
 
+export type Macros = {
+  protein: number;
+  carbs: number;
+  fat: number;
+  [key: string]: number;
+};
+
 export type Recipe = {
   id: number;
   name: string;
@@ -14,6 +21,7 @@ export type Recipe = {
   servings: number;
   ingredients: Ingredient[];
   instructions: string[];
+  macros?: Macros;
   image?: any;
 };
 
