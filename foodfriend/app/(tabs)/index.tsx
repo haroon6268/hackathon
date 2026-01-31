@@ -1,5 +1,7 @@
 import { RecipeCard } from "@/components/RecipeCard";
 import { Recipe } from "@/context/AppContext";
+import { useAuth, useUser } from "@clerk/clerk-expo";
+import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import {
@@ -8,6 +10,7 @@ import {
 	StyleSheet,
 	Text,
 	TouchableOpacity,
+	View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -21,6 +24,8 @@ const CATEGORIES = [
 ];
 
 const RecipeList = () => {
+	const { signOut } = useAuth();
+	const { user } = useUser();
 	const SAMPLE_RECIPES: Recipe[] = [
 		{
 			id: 1,
@@ -117,7 +122,12 @@ const RecipeList = () => {
 	];
 	return (
 		<SafeAreaView style={styles.container}>
-			<Text style={styles.greeting}>Hello Friend!</Text>
+			<View style={styles.header}>
+				<Text style={styles.greeting}>Hello {user?.firstName || "Friend"}!</Text>
+				<TouchableOpacity onPress={() => signOut()}>
+					<Ionicons name="log-out-outline" size={24} color="#666" />
+				</TouchableOpacity>
+			</View>
 			<ScrollView
 				horizontal
 				showsHorizontalScrollIndicator={false}
@@ -158,12 +168,17 @@ const styles = StyleSheet.create({
 	container: {
 		backgroundColor: "#fff",
 	},
+	header: {
+		flexDirection: "row",
+		justifyContent: "space-between",
+		alignItems: "center",
+		paddingHorizontal: 16,
+		paddingTop: 16,
+	},
 	greeting: {
 		fontSize: 28,
 		fontWeight: "bold",
 		color: "#333",
-		paddingHorizontal: 16,
-		paddingTop: 16,
 	},
 	categoryScroll: {
 		padding: 16,
